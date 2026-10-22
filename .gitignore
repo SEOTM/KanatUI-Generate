@@ -1,0 +1,50 @@
+# ============================================================================
+# GenUI — Git 忽略规则
+# 建立于 2026-10-14(引入本地版本管理时)。
+# 口径: 只入库"源码 + 工程源文档 + 手工维护资产"。
+# ============================================================================
+
+# ---- 构建输出(CMake / MSBuild 生成物, 任意层级) ----
+out/
+build/
+CMakeCache.txt
+CMakeFiles/
+CMakeUserPresets.json
+*.slnx
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.obj
+*.pdb
+*.ilk
+*.exp
+*.tlog
+*.idb
+*.exe
+*.dll
+*.lib
+
+# ---- 依赖缓存(vcpkg / NuGet 还原产物) ----
+# 注: nuget\ 是离线包源(NuGet.config 指向它), 属工程必需资产, 故不忽略其中的 .nupkg
+vcpkg_installed/
+nuget-packages/
+packages/
+
+# ---- 临时工作区 ----
+_tmp/
+temp/
+drafts/
+
+# ---- 手动备份(版本管理交由 Git, 不再落盘) ----
+backup/
+*.bak
+*.bak-*
+*.old
+*.orig
+*~
+*副本*
+*.corrupt-*
+*.pre-*
+
+# ---- 历史取证归档(截帧 BMP 等大件, 不入库) ----
+docs/archive/
