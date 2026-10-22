@@ -81,7 +81,7 @@ add_custom_command(
 #   framework\layout         : 布局子系统(布局对象 / 中间态模型 / 构建原语 / 读方向解算 / 渲染出口 / 几何解算)
 #   framework\dispatch       : 调度层(帧间事件 / 事件绑定表 / 调度与场景实现切片)
 #   app / doc / editor / common : 应用层(多布局文档 + 编辑器 + 预览与会话)
-# 说明: framework\dispatch 的 Dispatch / DispatchScene 随框架就位(与 Demo 快照一致), 但本工程的宿主
+# 说明: framework\dispatch 的 Dispatch / DispatchScene 随框架就位(与 Kanat 快照一致), 但本工程的宿主
 #       生命周期仍由 app\AppHost 驱动(多文档与编辑器协调面不走单文档调度层); 该两件不参与运行时接线。
 # ================================
 set(GENUI_FRAMEWORK_SRC

@@ -11,8 +11,8 @@
 > **公开版说明**: 本仓库为公开版本, 已移除逐轮过程留痕(`docs\HISTORY.md`、`docs\archive\` 等)与内部工程管理文档。
 > 源码与接口文档中指向这些文件的引用仅用于说明沿革。
 >
-> 体例来源 = `Demo` 工程 `docs\INTERFACE-DOC-STYLE.md`(该工程第 26 轮树立、第 27 轮推广到 29 份);
-> GenUI 采纳同一体例并全仓统一, 与 `Demo` 侧保持可对照。
+> 体例来源 = `Kanat` 工程 `docs\INTERFACE-DOC-STYLE.md`(该工程第 26 轮树立、第 27 轮推广到 29 份);
+> GenUI 采纳同一体例并全仓统一, 与 `Kanat` 侧保持可对照。
 
 ---
 
