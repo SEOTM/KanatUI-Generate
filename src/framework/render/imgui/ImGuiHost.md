@@ -11,7 +11,7 @@ UI 宿主:纯静态类(构造、析构、拷贝均删除), 无实例 ⇒ 进程�
 
 本模块属 **framework 层**(UI 宿主绑定层), 依赖 `framework/render/imgui/D3D11Manager`(每窗口的 D3D11 设施,
 同目录)、`framework/render/imgui/ability/ImGuiRender`(被注入的能力表来源)、`framework/layout/LayoutRender`(注入点)、
-`common/AppEnv`(窗口圆角); 不认识布局、不做数据层、不读项目身份, 也不引 `app/`、`editor/`、`doc/` 头。
+`framework/base/AppEnv`(窗口圆角); 不认识布局、不做数据层、不读项目身份, 也不引 `app/`、`editor/`、`doc/` 头。
 设备由本模块创建并释放 ⇒ 外部任何层面都不必持有 D3D 句柄; 窗口句柄只在模块内部使用, 外部经
 `GetCurrentWnd` 按需取用而不持久持有。窗口过程由本模块内置(销毁窗口与 `ESC` 请求退出, 其余交系统默认过程),
 不对外暴露、也不由调用方传入。
@@ -1426,6 +1426,6 @@ static constexpr DWORD MAX_WND = 8;
 | 标头 | `framework/render/imgui/ImGuiHost.h`(`src\framework\render\imgui\ImGuiHost.h`) |
 | 实现 | `src\framework\render\imgui\ImGuiHost.cpp`;`WndSpec` 等结构定义在头文件内 |
 | 命名空间 | `ImGuiHost`(命名空间内含 `WndSpec` 结构与状态枚举) |
-| 依赖 | `minwindef.h` · `imgui.h` · `imgui_impl_win32` · `imgui_impl_dx11` · `user32.dll` · `common/AppEnv.h` · `dwmapi.dll` · `framework/render/imgui/D3D11Manager` · `imgui` · `framework/render/Render.h` · `framework/render/imgui/ability/ImGuiRender` · `framework/render/imgui/control/Controls` · `framework/layout/LayoutRender` · `imm32.dll` · `dxgi.dll` · `framework/base/ControlSpec.h` |
+| 依赖 | `minwindef.h` · `imgui.h` · `imgui_impl_win32` · `imgui_impl_dx11` · `user32.dll` · `framework/base/AppEnv.h` · `dwmapi.dll` · `framework/render/imgui/D3D11Manager` · `imgui` · `framework/render/Render.h` · `framework/render/imgui/ability/ImGuiRender` · `framework/render/imgui/control/Controls` · `framework/layout/LayoutRender` · `imm32.dll` · `dxgi.dll` · `framework/base/ControlSpec.h` |
 | 平台 | Windows 全版本 |
 | 线程安全 | 否; 主消息循环、每窗口 ImGui 上下文与 D3D 设施须在进程主线程串行使用 |

@@ -187,6 +187,6 @@ public:
 | 标头 | `framework/layout/Layout.h`(`src\framework\layout\Layout.h`) |
 | 实现 | `src\framework\layout\Layout.cpp` |
 | 命名空间 | 全局(类) |
-| 依赖 | `common/MemoryManager.h` · `framework/base/ControlSpec.h` · `ucrt` |
+| 依赖 | `framework/base/mem/MemoryManager.h` · `framework/base/ControlSpec.h` · `ucrt` |
 | 平台 | Windows 全版本 |
 | 线程安全 | 否(分配器与空对象为静态成员, 无内部同步); 跨线程使用须由调用方串行 |

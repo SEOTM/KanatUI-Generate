@@ -22,7 +22,7 @@
 #include "framework/render/imgui/ability/ImGuiRender.h"		// ImGui 侧渲染能力(初始化期注入布局渲染出口)
 #include "framework/render/imgui/control/Controls.h"		// 控件绘制接口表(初始化期注入布局渲染出口)
 #include "framework/layout/LayoutRender.h"		// 渲染能力注入点(布局渲染出口)
-#include "common/AppEnv.h"				// 窗口圆角(优先 DWM, 不可用时回退 RGN)
+#include "framework/base/AppEnv.h"			// 窗口圆角(优先 DWM, 不可用时回退 RGN)
 
 // 从 imgui_impl_win32.cpp 前向声明消息处理程序
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);

@@ -18,8 +18,8 @@
 //   - 外壳快照装配的解析器工厂(DocumentIO::NewSolver)与"中间态 → 展开态"构建
 //     (LayoutBuilder::BuildLayoutFromNode)与内嵌成员装配(FlexHost::SetShellBase /
 //     FlexHost::BuildFlexMembersFromSolver / FlexHost::FreeFlexLayouts)一律按其现有公开接口调用。
-//   依赖方向: app → framework(Layout / LayoutModel / Controls / GeometrySolver / FrameEvent / LayoutBuilder) /
-//     doc / common(AllocatorHub); 不依赖 editor ⇒ 不新增任何跨层反依赖。
+//   依赖方向: app → framework(Layout / LayoutModel / Controls / GeometrySolver / FrameEvent / LayoutBuilder /
+//     base\mem) / doc; 不依赖 editor ⇒ 不新增任何跨层反依赖。
 // ================================
 
 #pragma once

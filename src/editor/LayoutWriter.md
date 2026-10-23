@@ -5,7 +5,7 @@
 > 未来**框架复用时不含本模块**（框架只含布局 / 控件 / 渲染 / 事件与读方向解析）。
 > 定位：**写方向**序列化 —— 把中间态（`FileMidState`）生成**规范 JSON 文本**或 **bin 字节流**，并写盘（备份 + 临时文件 + 原子替换）。
 > 对读方向模块 = `LayoutSolver`（文件 → 中间态，含 bin 解析）；两者共用同一中间态定义与**同一套 bin 格式契约**
-> （契约定义在 `src\framework\layout\LayoutModel.h` 的"bin 文件格式契约"区）⇒ **彼此无依赖**；校验码算法取 `src\common\FileCodec.h`（CRC32）。
+> （契约定义在 `src\framework\layout\LayoutModel.h` 的"bin 文件格式契约"区）⇒ **彼此无依赖**；校验码算法取 `src\framework\base\util\FileCodec.h`（CRC32，流式三件套）。
 
 ## 1. 公开接口
 

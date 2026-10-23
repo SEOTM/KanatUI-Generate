@@ -18,7 +18,7 @@
 `NULL` 表示无外壳基座 ⇒ 查询一律返回"无活动成员"。
 
 本模块只承载内嵌成员: 外壳快照本体归 `app\PreviewSession`, 条目表与中间态归 `doc\Document`, 实际绘制归
-`framework\render\Render.h`。状态全为静态成员、无内部同步; 分配一律走 `common\AllocatorHub` 的公开接口, 本模块不做
+`framework\render\Render.h`。状态全为静态成员、无内部同步; 分配一律走 `framework\base\mem\AllocatorHub` 的公开接口, 本模块不做
 堆分配, 也不释放分配器持有的存储。
 
 本模块包含以下编程接口:
@@ -519,6 +519,6 @@ constexpr DWORD HINT_BODY_BUF = 512;
 | 标头 | `app/FlexHost.h`(`src\app\FlexHost.h`) |
 | 实现 | `src\app\FlexHost.cpp` |
 | 命名空间 | 全局(类 `FlexHost`、结构 `FlexEntry`、两个 `constexpr` 常量) |
-| 依赖 | 工程内: `app\Application`(就绪判据与条目几何族)、`doc\Document`(条目形状 `LayoutEntry`)、`common\AllocatorHub`(会话分配器与串池化)、`framework\layout\Layout`(`Layout` 与析构)、`framework\layout\LayoutModel`(中间态取节点)、`framework\layout\LayoutBuilder`(中间态 → 展开态 / 整枚布局缓冲回收)、`framework\layout\LayoutSolver`(解析器与中间态)、`framework\base\CtrlBuffer`(控件缓冲: 容量口径 / 取址 / 回收); 渲染出口为 `framework\layout\LayoutRender` 的 `RenderFlex`。系统: CRT(`printf` / `strcmp` / `strncpy_s`) |
+| 依赖 | 工程内: `app\Application`(就绪判据与条目几何族)、`doc\Document`(条目形状 `LayoutEntry`)、`framework\base\mem\AllocatorHub`(会话分配器与串池化)、`framework\layout\Layout`(`Layout` 与析构)、`framework\layout\LayoutModel`(中间态取节点)、`framework\layout\LayoutBuilder`(中间态 → 展开态 / 整枚布局缓冲回收)、`framework\layout\LayoutSolver`(解析器与中间态)、`framework\base\CtrlBuffer`(控件缓冲: 容量口径 / 取址 / 回收); 渲染出口为 `framework\layout\LayoutRender` 的 `RenderFlex`。系统: CRT(`printf` / `strcmp` / `strncpy_s`) |
 | 平台 | Windows; 内嵌成员无独立 `HWND`, 依赖宿主窗口同帧绘制, 无窗口的进程不必调用本模块 |
 | 线程安全 | 否(状态全为静态成员, 无内部同步; 装配 / 释放 / 查询须同线程串行) |

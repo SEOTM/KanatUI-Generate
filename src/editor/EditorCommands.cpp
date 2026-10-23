@@ -8,7 +8,7 @@
 #include <windows.h>					// RtlZeroMemory(布局重排的深拷缓冲清零)
 #include "editor/EditorCommands.h"
 #include "doc/Document.h"
-#include "common/AllocatorHub.h"		// 池内字符串拷贝(CopyString; 布局名两处同写用)
+#include "framework/base/mem/AllocatorHub.h"		// 池内字符串拷贝(CopyString; 布局名两处同写用)
 #include "framework/base/BasicDesign.h"		// AutoSize(条目参考尺寸)
 #include "framework/base/ControlSpec.h"		// 控件类型身份(CtrlType / GetTypeName; 新建布局的三结构件模板)
 #include "framework/layout/GeometrySolver.h"	// 几何解算与模式/基准换算(条目窗口像素与内部参考重建)

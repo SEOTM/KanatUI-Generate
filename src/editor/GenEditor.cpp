@@ -26,13 +26,13 @@
 #include "editor/SelectionOverlay.h"	// 预览选中态视图叠加件(链外绘制)
 #include "app/HostContext.h"			// 宿主能力与窗口句柄
 #include "app/SessionContracts.h"		// 会话语义契约(提示展示 / 会话面回调)
-#include "common/AllocatorHub.h"		// 会话分配器
-#include "common/ResourceLoader.h"		// exe 目录与路径拼接
+#include "framework/base/mem/AllocatorHub.h"		// 会话分配器
+#include "framework/dispatch/ResourceLoader.h"		// exe 目录与路径拼接
 #include "framework/layout/GeometrySolver.h"	// 几何解算与模式/基准换算
 #include "doc/Document.h"	// 文档承载者
 #include "doc/DocConsistency.h"	// 文档数据一致性: 保存前体检 / ID 归一
 #include "doc/RawAttributes.h"	// 旁挂表族: 原类型串 / 声明文本
-#include "common/FileCodec.h"
+#include "framework/base/util/FileCodec.h"
 #include "framework/base/CtrlBuffer.h"		// 控件缓冲(数据结构 / 容量 / 取址 / 构造与回收)
 #include "framework/base/TextWidth.h"
 #include "imgui.h"
@@ -233,6 +233,7 @@ static CtrlInfo* EdOwnerCtrl(CONST EdCellOwner& owner);	// 校验并取来源控
 static INT EdOwnerAxis(CONST EdCellOwner& owner);		// 取来源尺寸轴(越界回退当前轴)
 static char* EdShellTxtBuf(LPCSTR label, size_t* pCap);	// 取外壳释放控件的文本缓冲
 // ---- 文件行: 文档载入与路径栏同步 ----
+static LPCSTR GetExeDirCached();					// 取 exe 目录(文件对话框初始目录; 首次调用缓存)
 static BOOL OpenDocumentByPath(LPCSTR path);	// 载入整份文档并刷新路径栏(浏览/打开共用)
 static VOID SyncFilePathShell();				// 路径栏两向同步(用户输入 -> 文档路径 / 文档路径 -> 控件)
 static CtrlInfo* ShellFindPathCtrl();			// 路径控件(优先 INPUT_ACTION, 回退 INPUT_SINGLE)
@@ -1201,6 +1202,38 @@ static VOID SyncFilePathShell()
 		strncpy_s(szPathShown, MAX_PATH, szFilePath, _TRUNCATE);
 	}
 }
+// ================================
+// 区域: 文件内静态工具区
+// ================================
+
+// 函数: GetExeDirCached
+// 描述: 取 exe 所在目录(含末尾 '\'; 首次调用缓存, 之后只读)
+// 说明: 框架层 ResourceLoader 只保留 GetFilePath / FileExists(2026-10-23 同 common 归位时不再暴露 GetExeDir);
+//   文件对话框的初始目录属编辑器侧用法, 故在此就地缓存一份。
+// 返回:
+//		LPCSTR: 目录串(未取到时为空串)
+static LPCSTR GetExeDirCached()
+{
+	static CHAR szDir[MAX_PATH] = "";
+	static BOOL bCached = FALSE;
+	if (!bCached)
+	{
+		CHAR szExe[MAX_PATH]{};
+		DWORD dwLen = GetModuleFileNameA(NULL, szExe, MAX_PATH);
+		if (dwLen > 0 && dwLen < MAX_PATH)
+		{
+			DWORD dwPos = dwLen;
+			while (dwPos > 0 && szExe[dwPos - 1] != '\\')
+			{
+				dwPos--;
+			}
+			lstrcpynA(szDir, szExe, (INT)(dwPos + 1));
+		}
+		bCached = TRUE;
+	}
+	return szDir;
+}
+
 // 函数: OnBrowse
 // 描述: GENUI_BROWSE(文件行"浏览"): 文件对话框选择布局文件(过滤器含 bin / JSON), 选中即载入并刷新路径栏
 // 时机: 帧间事件 —— 由本函数自行代理: 渲染帧内触发(IsInFrame 为真)只把本函数挂到
@@ -1228,7 +1261,7 @@ VOID GenUIEditor::OnBrowse(VOID* obj, uint64_t oper, uint64_t param, void* data)
 	ofn.nMaxFile = MAX_PATH;
 	// 初始目录 = exe 目录(取不到时交给系统默认)
 	{
-		LPCSTR lpDir = ResourceLoader::GetExeDir();
+		LPCSTR lpDir = GetExeDirCached();
 		ofn.lpstrInitialDir = (lpDir != NULL && lpDir[0] != '\0') ? lpDir : NULL;
 	}
 	// 默认扩展名 = bin(bin 为设计最终形态; 形态仍由文件内容嗅探判定, 扩展名只用于补全)
@@ -1375,7 +1408,7 @@ VOID GenUIEditor::OnSave(VOID* obj, uint64_t oper, uint64_t param, void* data)
 		ofn.lpstrFilter = "布局 bin (*.bin)\0*.bin\0布局 JSON (*.json)\0*.json\0所有文件 (*.*)\0*.*\0\0";
 		ofn.lpstrFile = szFile;
 		ofn.nMaxFile = MAX_PATH;
-		ofn.lpstrInitialDir = ResourceLoader::GetExeDir();
+		ofn.lpstrInitialDir = GetExeDirCached();
 		// 默认扩展名 = bin(bin 为设计最终形态)⇒ 用户不改扩展名时落 bin 文件
 		ofn.lpstrDefExt = "bin";
 		ofn.Flags = OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST;

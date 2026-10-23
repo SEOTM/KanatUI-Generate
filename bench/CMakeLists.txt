@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.28)
 
 # ================================
 # 工装: MemBench(MemoryManager 基准与契约测试)
-# 描述: 独立控制台工装, 直接编译 src\MemoryManager.cpp; 不依赖 vcpkg / NuGet,
+# 描述: 独立控制台工装, 直接编译 framework\base\mem\MemoryManager.cpp; 不依赖 vcpkg / NuGet,
 #       不参与 GenUI 主产物构建(与主工程解耦 ⇒ 加基准不改主工程的生成期流程)
 # 构建(经根目录 IPCHost 通道; 旧 IPCBridge 已于 2026-10-09 退役):
 #   cmake   -S GenUI\bench -B GenUI\bench\out -G "Visual Studio 18 2026" -A x64
@@ -25,7 +25,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(MemBench
 	MemBench.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/../src/common/MemoryManager.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/../src/framework/base/mem/MemoryManager.cpp
 )
 
 # 唯一包含根 = 主工程 src\(MemBench.cpp 与 MemoryManager.cpp 均以"子目录/文件"形式引用)

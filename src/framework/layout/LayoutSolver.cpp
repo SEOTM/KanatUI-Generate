@@ -1,5 +1,5 @@
 #include "framework/layout/LayoutSolver.h"
-#include "common/FileCodec.h"
+#include "framework/base/util/FileCodec.h"
 #include <Windows.h>
 #include <stdio.h>
 #include <new>
@@ -21,7 +21,7 @@ VOID SolverRefSize(RefSize& dest, rapidjson::Value& src);
 VOID SolverStr(char* dst, size_t cap, LPCSTR src, LPCSTR szWhere, LPCSTR szField);
 
 // ========================
-// 区域: bin 读方向(格式契约见 src\framework\layout\LayoutModel.h 的格式契约区; 校验算法见 src\common\FileCodec.h;
+// 区域: bin 读方向(格式契约见 src\framework\layout\LayoutModel.h 的格式契约区; 校验算法见 src\framework\base\util\FileCodec.h;
 //       记录区整块拷贝, 不做逐字段解析)
 // ========================
 
@@ -343,7 +343,7 @@ CONST FileMidState& LayoutSolver::GetState()
 
 // ================================
 // 区域: bin 读方向实现(格式 v1; 契约常量 / 段尺寸公式 / 版本号位域见 src\framework\layout\LayoutModel.h,
-//       校验算法见 src\common\FileCodec.h)
+//       校验算法见 src\framework\base\util\FileCodec.h)
 // 说明: 与 JSON 读方向同构(两趟: 先校验并数数, 再建中间态并逐项填充), 产物与失败语义完全一致;
 //       bin 的写方向归 LayoutWriter(与 JSON 写同模块), 本模块只读不写 ——
 //       两侧共用 LayoutModel 的格式契约与 FileCodec 的校验算法, 彼此无依赖。

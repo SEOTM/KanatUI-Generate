@@ -110,7 +110,7 @@ static VOID SetSession(
 
 就绪口径分两面, 不要混用: 预览族以 `pDocument == NULL` 判定"未注入"(取基座返回 `NULL`、建立与同步失败);
 外壳快照族以 `pArenaHub != NULL` 且会话分配器本身非空判定就绪。由于第三参只作判据, 就绪不等于"可直接分配",
-分配一律走 `common\AllocatorHub` 的公开入口。
+分配一律走 `framework\base\mem\AllocatorHub` 的公开入口。
 
 三句柄都是借用: 本模块不释放、不拷贝、不接管所有权; 调用方须保证它们在复位之前比本模块的所有调用活得久。
 
@@ -969,6 +969,6 @@ public:
 | 标头 | `app/PreviewSession.h`(`src\app\PreviewSession.h`) |
 | 实现 | `src\app\PreviewSession.cpp` |
 | 命名空间 | 全局(类 `PreviewSession`) |
-| 依赖 | 工程内: `app\Application`(条目几何族与保留名)、`app\DocumentIO`(解析器工厂)、`app\FlexHost`(内嵌成员装配 / 释放 / 基座注入)、`app\HostContext`(预览点击处理器)、`doc\Document`(承载者与条目)、`doc\RawAttributes`(旁挂表)、`common\AllocatorHub`(条目分配 / 串池化 / 缓冲回收)、`framework\layout\Layout`、`framework\layout\LayoutModel`(中间态与缺省参考尺寸)、`framework\layout\LayoutBuilder`(中间态 → 展开态 / 控件装配 / 整枚布局缓冲回收)、`framework\layout\LayoutSolver`、`framework\base\CtrlBuffer`(控件缓冲: 数据结构 / 取址 / 构造与回收)、`framework\base\ControlSpec`(类型身份表)、`framework\layout\GeometrySolver`(像素几何解算)、`framework\dispatch\FrameEvent`(帧间队列)、`framework\base\BasicDesign`; 系统: `kernel32`(串比较)、CRT(`printf`) |
+| 依赖 | 工程内: `app\Application`(条目几何族与保留名)、`app\DocumentIO`(解析器工厂)、`app\FlexHost`(内嵌成员装配 / 释放 / 基座注入)、`app\HostContext`(预览点击处理器)、`doc\Document`(承载者与条目)、`doc\RawAttributes`(旁挂表)、`framework\base\mem\AllocatorHub`(条目分配 / 串池化 / 缓冲回收)、`framework\layout\Layout`、`framework\layout\LayoutModel`(中间态与缺省参考尺寸)、`framework\layout\LayoutBuilder`(中间态 → 展开态 / 控件装配 / 整枚布局缓冲回收)、`framework\layout\LayoutSolver`、`framework\base\CtrlBuffer`(控件缓冲: 数据结构 / 取址 / 构造与回收)、`framework\base\ControlSpec`(类型身份表)、`framework\layout\GeometrySolver`(像素几何解算)、`framework\dispatch\FrameEvent`(帧间队列)、`framework\base\BasicDesign`; 系统: `kernel32`(串比较)、CRT(`printf`) |
 | 平台 | Windows; 编辑窗口按无边框弹出窗口口径建窗(客户区与建窗尺寸一致), 不适用时以实际客户区校正 |
 | 线程安全 | 否(六枚状态全为静态成员, 无内部同步; 建立 / 装配 / 释放 / 查询须同线程串行) |

@@ -1,5 +1,5 @@
 #include "editor/LayoutWriter.h"
-#include "common/FileCodec.h"
+#include "framework/base/util/FileCodec.h"
 #include <Windows.h>
 #include <stdio.h>
 #include <string.h>
@@ -551,7 +551,9 @@ BOOL LayoutWriter::BuildBinBytes(CONST FileMidState& state, LPBYTE* ppBytes, siz
 		}
 		// 3. 校验码 = CRC32(整个文件; 首 4 字节即校验码字段, 此刻为 0 ⇒ 按 0 参与), 回填文件头首 4 字节
 		{
-			DWORD dwCrc = FileCodec::Crc32((LPCVOID)lpBytes, cbTotal);
+			// 框架层 FileCodec 只保留流式三件套(2026-10-23 取消一次算完的 Crc32) ⇒ 单段字节即三件套的组合
+			DWORD dwCrc = FileCodec::Crc32Finish(
+				FileCodec::Crc32Update(FileCodec::Crc32Begin(), (LPCVOID)lpBytes, cbTotal));
 			memcpy(lpBytes + 0, &dwCrc, 4);
 		}
 	}

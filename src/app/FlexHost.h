@@ -8,9 +8,9 @@
 //     但成员的解析产物来自外壳源(与外壳快照同源同生命周期) ⇒ 不随被编辑文档的切换 / 新建变化。
 //   - 基座归属判据(活动集合只对外壳布局成立)的外壳布局指针经 SetShellBase 由应用侧注入
 //     (外壳快照构建 / 释放点原位设置; NULL = 无外壳基座 ⇒ 查询返回"无活动成员")。
-//   - 会话分配器 / 控件装配 / 布局对象构建一律调 common\AllocatorHub · framework\Controls ·
+//   - 会话分配器 / 控件装配 / 布局对象构建一律调 framework\base\mem\AllocatorHub · framework\Controls ·
 //     framework\LayoutBuilder 的现有公开接口 ⇒ 不触锁定面。
-//   依赖方向: app → framework(Layout / LayoutModel / LayoutBuilder / Controls / LayoutSolver) / common;
+//   依赖方向: app → framework(Layout / LayoutModel / LayoutBuilder / Controls / LayoutSolver / base\mem);
 //     不依赖 app 其它模块 / editor ⇒ 不新增任何跨层反依赖。
 // ================================
 

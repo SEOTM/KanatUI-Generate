@@ -7,7 +7,7 @@
 #include <string.h>			// strcmp
 #include "doc/RawAttributes.h"
 #include "doc/Document.h"			// 条目结构(旁挂表两字段与容量字段)
-#include "common/AllocatorHub.h"	// 小对象池分配 / 回收与串拷贝
+#include "framework/base/mem/AllocatorHub.h"	// 小对象池分配 / 回收与串拷贝
 #include "framework/layout/Layout.h"		// 布局控件数 / 控件信息(有自身缓冲判据)
 
 // 注入的条目反查(反查本体属会话面 ⇒ 由应用侧在"分配成员存储"之后注入; NULL = 未注入)

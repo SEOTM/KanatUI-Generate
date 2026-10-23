@@ -1,13 +1,13 @@
 #pragma once
 #include "framework/layout/LayoutModel.h"
 #include "framework/base/BasicDesign.h"
-#include "common/MemoryManager.h"
+#include "framework/base/mem/MemoryManager.h"
 
 // ================================
 // 区域: bin 格式契约的来源
 // 说明: ① bin 文件格式的字节布局常量(BIN_* / BinSegBytes)、版本号位域与规模上限
 //          (LAYOUT_MAX / CTRL_MAX)声明在 src\framework\layout\LayoutModel.h 的"bin 文件格式契约"区
-//          (与中间态结构体布局同源); 校验算法取 src\common\FileCodec.h 的 CRC32;
+//          (与中间态结构体布局同源); 校验算法取 src\framework\base\util\FileCodec.h 的 CRC32;
 //       ② 本模块只负责读方向(bin / JSON 文档 → 中间态) ⇒ 不依赖写方向模块 LayoutWriter
 //          (只装载读方向时无须链接写方向)。
 // ================================

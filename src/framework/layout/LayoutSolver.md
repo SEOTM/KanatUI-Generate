@@ -135,6 +135,6 @@ public:
 | 标头 | `framework/layout/LayoutSolver.h`(`src\framework\layout\LayoutSolver.h`) |
 | 实现 | `src\framework\layout\LayoutSolver.cpp` |
 | 命名空间 | 全局(类) |
-| 依赖 | `framework/layout/LayoutModel.h` · `common/FileCodec.h` · `common/MemoryManager.h` · `document.h` · `kernel32.dll` · `ucrt` |
+| 依赖 | `framework/layout/LayoutModel.h` · `framework/base/util/FileCodec.h` · `framework/base/mem/MemoryManager.h` · `document.h` · `kernel32.dll` · `ucrt` |
 | 平台 | Windows 全版本 |
 | 线程安全 | 否(实例持有中间态与计数, 无内部同步); 同一实例须由单线程使用 |

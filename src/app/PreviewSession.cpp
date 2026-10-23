@@ -12,7 +12,7 @@
 #include "app/DocumentIO.h"			// 解析器工厂 NewSolver(外壳快照两入口)
 #include "app/FlexHost.h"			// 内嵌成员装配与释放(外壳快照同源同生命周期)
 #include "doc/Document.h"			// 承载者句柄解引用(条目数组 / 中间态 / 激活索引)
-#include "common/AllocatorHub.h"	// 会话分配器(条目分配 / 串拷贝 / 池回收)
+#include "framework/base/mem/AllocatorHub.h"	// 会话分配器(条目分配 / 串拷贝 / 池回收)
 #include "framework/base/BasicDesign.h"
 #include "framework/base/ControlSpec.h"	// 类型身份表(GetTypeEnum)
 #include "framework/base/CtrlBuffer.h"		// 控件缓冲(数据结构 / 取址 / 回收)

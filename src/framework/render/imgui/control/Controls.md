@@ -7,7 +7,7 @@
 控件库逐枚无状态被调用,不持有控件数据、不分配控件对象、不遍历布局;**控件缓冲的装配与回收不归本模块**
 (见 `framework/base/CtrlBuffer.h` 与 `framework/layout/LayoutBuilder.h`)。
 
-本模块属 **framework 层 · 控件库 · 控件**(部件实现在同目录 `Widgets`)。依赖方向 `framework → framework / common`:
+本模块属 **framework 层 · 控件库 · 控件**(部件实现在同目录 `Widgets`)。依赖方向一律向下:
 上下文类型与投影配色取自 `BasicDesign`,类型身份与操作码取自 `ControlSpec`,缓冲结构与取址辅助取自 `CtrlBuffer`,
 绘制单元取自 `Widgets`(部件层),接口表类型取自 `render/Render.h`,当前渲染窗口取自宿主件;不感知布局文档解析、
 几何解算、应用状态与设备层。

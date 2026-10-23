@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <basetsd.h>
 #include <string.h>
-#include "common/MemoryManager.h"
+#include "framework/base/mem/MemoryManager.h"
 #include "framework/base/FuncPtr.h"
 
 // ================================

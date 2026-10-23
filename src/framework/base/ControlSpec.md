@@ -7,8 +7,8 @@
 窗口位置参数槽、列表缓冲头。
 
 本模块属 **framework 层 · 控件库的约定面**,只含编译期常量、内联函数与两枚纯数据结构(不含分配、绘制、
-状态)。依赖方向 `framework → framework / common`:向上被 `Controls`(绘制与装配)、`Widgets`(部件)、
-应用侧与渲染出口共同引用;自身只依赖 `common/MemoryManager.h`(`BufferInfo`)与 `framework/base/FuncPtr.h`
+状态)。依赖方向一律向下:向上被 `Controls`(绘制与装配)、`Widgets`(部件)、
+应用侧与渲染出口共同引用;自身只依赖 `framework/base/mem/MemoryManager.h`(`BufferInfo`)与 `framework/base/FuncPtr.h`
 (`pfnCtrlEvent`)。
 
 **不做什么**:缓冲容量的取值、缓冲布局与生命周期 → `CtrlBuffer`;文本区取址 → `CtrlBuffer`;渲染分派表与绘制 → `Controls`;

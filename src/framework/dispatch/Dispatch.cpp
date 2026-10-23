@@ -18,7 +18,7 @@
 #include <string.h>
 
 #include "framework/dispatch/Dispatch.h"
-#include "common/AppEnv.h"		// 控制台 UTF-8 / 系统亮暗 / 窗口圆角
+#include "framework/base/AppEnv.h"		// 控制台 UTF-8 / 系统亮暗(窗口圆角归宿主)
 #include "framework/base/ControlSpec.h"	// 投影层号常量(控件层次 → 层号)
 #include "framework/layout/LayoutRender.h"	// 布局渲染出口
 
@@ -58,18 +58,27 @@ static FLOAT ProjSampleConcave(DWORD dwParam, DWORD dwLayers);
 // 描述: 取显示状态的中文短名(渲染自证用)
 static LPCSTR ShowStateName(WndShowState state);
 
+// 函数: FallbackRef
+// 描述: 取缺省参考尺寸(未装配布局或索引越界时的回退量; 函数内静态实例)
+static CONST AutoSize& FallbackRef();
+
 // ================================
 // 区域: 生命周期实现区
 // ================================
 
 // 函数: Init
-// 描述: 初始化调度层(控制台 UTF-8 → DPI 感知 → 事件绑定表注入 → 场景载入 → 宿主注入与样式登记 → 无人值守参数)
-BOOL Dispatch::Init(CONST HostApi* pHost, CONST DispatchConfig& cfg, BindingsFunc pfnBindings)
+// 描述: 初始化调度层(控制台 UTF-8 → DPI 感知 → 事件绑定表注入 → 场景装配 → 宿主注入与样式登记 → 无人值守参数)
+BOOL Dispatch::Init(CONST HostApi* pHost, CONST DispatchConfig& cfg, BindingsFunc pfnBindings,
+	CONST LayoutSource& source)
 {
 	// 变量声明区(避免 goto 跳过变量声明)
 	BOOL bRet = FALSE;
+	BOOL bNeedDoc = FALSE;
 	size_t nBindings = 0;
-	if (pHost == NULL || pfnBindings == NULL || cfg.szDocName == NULL || cfg.dwWndCount == 0)
+	// 文档名只对"需要解析文档"的来源是必需的(缺省加载链 / 内存缓冲的回退链); 其余来源可传空
+	bNeedDoc = (source.kind == LAYOUT_SOURCE_DEFAULT || source.kind == LAYOUT_SOURCE_MEMORY) ? TRUE : FALSE;
+	if (pHost == NULL || pfnBindings == NULL || cfg.dwWndCount == 0 ||
+		(bNeedDoc != FALSE && cfg.szDocName == NULL))
 	{
 		return bRet;
 	}
@@ -87,8 +96,8 @@ BOOL Dispatch::Init(CONST HostApi* pHost, CONST DispatchConfig& cfg, BindingsFun
 		UIEventHandler::SetBindings(pBindings, nBindings);
 		Log("事件绑定表: %zu 条(拖拽窗口 · 事件委托演示)\n", nBindings);
 	}
-	// 5. 场景载入: 分配器 → 成员块(含配置复制) → 文档解析 → 展开 → 几何解算 → 位置定稿 → 自证
-	if (!LoadScene(cfg))
+	// 5. 场景装配: 分配器 → 成员块(含配置复制) → 布局来源分派(解析 / 展开 / 几何解算 / 位置定稿 / 自证)
+	if (!LoadScene(cfg, source))
 	{
 		goto INIT_END;
 	}
@@ -177,7 +186,7 @@ VOID Dispatch::SetDarkMode(BOOL bDark)
 // ================================
 
 // 函数: Frame
-// 描述: 每帧处理流程(建窗几何自证 → 数据层更新 → 布局渲染出口 → 可见性缓存 → IME 覆盖 → 渲染自证 → 退出判据)
+// 描述: 每帧处理流程(建窗几何自证 → 数据层更新 → 布局渲染清单 → 可见性缓存 → IME 覆盖 → 渲染自证 → 退出判据)
 VOID Dispatch::Frame(VOID* pUser)
 {
 	UNREFERENCED_PARAMETER(pUser);
@@ -192,9 +201,33 @@ VOID Dispatch::Frame(VOID* pUser)
 	}
 	// 2. 数据层更新: 亮暗模式跟随系统(亮暗 = 采样方向 ⇒ 每帧确保)
 	EnsureProjCR();
-	// 3. 渲染清单(单窗口单布局): 布局对象 → 渲染出口; 目标窗口由渲染器按顺序取得
-	//    说明: 出口返回 FALSE(未注入能力 / 布局无效 / 取不到目标窗口)时静默跳过本帧, 不中断主循环
-	LayoutRender::RenderBase(GetLayout(), GetRef(), data->pProjCR);
+	// 3. 渲染清单(按布局槽顺序): 基座布局独占一个标准窗口(RenderBase), 嵌套布局沿用前一枚基座布局
+	//    已开启的窗口段(RenderFlex); 不可见槽跳过
+	//    说明: 出口返回 FALSE(未注入能力 / 布局无效 / 取不到目标窗口)时静默跳过本帧, 不中断主循环;
+	//          基座布局失败不改"段已开启"状态 ⇒ 其后的嵌套布局仍归最近一次成功的基座布局
+	{
+		BOOL bSegmentOpen = FALSE;
+		for (DWORD i = 0; i < data->dwSlotCount; i++)
+		{
+			CONST LayoutSlot& slot = data->pSlots[i];
+			if (slot.pLayout == NULL || slot.bVisible == FALSE)
+			{
+				continue;
+			}
+			if (slot.bNested != FALSE)
+			{
+				if (bSegmentOpen != FALSE)
+				{
+					LayoutRender::RenderFlex(*slot.pLayout, slot.ref, data->pProjCR);
+				}
+				continue;
+			}
+			if (LayoutRender::RenderBase(*slot.pLayout, slot.ref, data->pProjCR) != FALSE)
+			{
+				bSegmentOpen = TRUE;
+			}
+		}
+	}
 	// 4. 窗口可见性缓存: 收尾自证在窗口销毁之后打印, 故先缓存本帧的显示状态与可见数
 	RefreshWndShowCache();
 	// 5. IME 覆盖: 控件库报告"正在编辑输入控件" ⇒ 本段关闭输入法(段结算后自动失效)
@@ -225,28 +258,137 @@ VOID Dispatch::OnSegment(DWORD index, VOID* pUser)
 // 区域: 访问实现区
 // ================================
 
-// 函数: GetLayout
-// 描述: 取布局对象(渲染源; 未就绪时返回空对象)
-Layout& Dispatch::GetLayout()
+// 函数: FallbackRef
+// 描述: 取缺省参考尺寸(未装配布局或索引越界时的回退量; 函数内静态实例)
+static CONST AutoSize& FallbackRef()
 {
-	if (data != NULL && data->bReady != FALSE && data->pLayout != NULL)
+	static AutoSize sFallback = AutoSize::CreateByRatio(
+		570, 430, 25, 13, 10, 4, AutoSize::AUTO_SIZE_BY_SCREEN_HEIGHT);
+	return sFallback;
+}
+
+// 函数: GetLayoutCount
+// 描述: 取布局数量(延迟装配且未提交时返回 0)
+DWORD Dispatch::GetLayoutCount()
+{
+	if (data == NULL)
 	{
-		return *data->pLayout;
+		return 0;
+	}
+	return data->dwSlotCount;
+}
+
+// 函数: GetLayoutAt
+// 描述: 取指定槽的布局对象(越界或空槽返回空对象)
+Layout& Dispatch::GetLayoutAt(DWORD index)
+{
+	if (data != NULL && index < data->dwSlotCount && data->pSlots[index].pLayout != NULL)
+	{
+		return *data->pSlots[index].pLayout;
 	}
 	return Layout::GetNullObject();
 }
 
+// 函数: GetRefAt
+// 描述: 取指定槽的参考尺寸(越界返回缺省参考量)
+CONST AutoSize& Dispatch::GetRefAt(DWORD index)
+{
+	if (data != NULL && index < data->dwSlotCount)
+	{
+		return data->pSlots[index].ref;
+	}
+	return FallbackRef();
+}
+
+// 函数: GetLayout
+// 描述: 取首枚布局对象(渲染源; 未就绪时返回空对象)
+Layout& Dispatch::GetLayout()
+{
+	return GetLayoutAt(0);
+}
+
 // 函数: GetRef
-// 描述: 取内部参考尺寸(控件几何解算与绘制取值基准; 未就绪时返回缺省参考量)
+// 描述: 取首枚参考尺寸(控件几何解算与绘制取值基准; 未就绪时返回缺省参考量)
 CONST AutoSize& Dispatch::GetRef()
 {
-	static AutoSize sNull = AutoSize::CreateByRatio(
-		570, 430, 25, 13, 10, 4, AutoSize::AUTO_SIZE_BY_SCREEN_HEIGHT);
-	if (data != NULL && data->bReady != FALSE)
+	return GetRefAt(0);
+}
+
+// ================================
+// 区域: 布局提交实现区
+// ================================
+
+// 函数: AttachLayouts
+// 描述: 整体替换布局(清空现有槽后逐枚接管; 含运行期替换; 布局对象所有权归调用方)
+BOOL Dispatch::AttachLayouts(Layout* CONST* ppLayouts, CONST AutoSize* pRefs, DWORD dwCount)
+{
+	// 首枚之外同样按"默认渲染首枚"的口径先隐藏(业务代码再按需打开)
+	if (data == NULL || !UseLayouts(ppLayouts, pRefs, dwCount, TRUE))
 	{
-		return data->ref;
+		return FALSE;
 	}
-	return sNull;
+	Log("布局提交: %u 枚(整体替换; 首枚可见; 控件=%zu 已绑定=%u)\n",
+		(unsigned)dwCount, (size_t)CountTotalCtrls(), (unsigned)CountBoundCtrls());
+	return TRUE;
+}
+
+// 函数: AddLayout
+// 描述: 追加一枚布局(逐枚提交; 布局对象所有权归调用方; 新槽默认可见且按基座渲染)
+BOOL Dispatch::AddLayout(Layout* pLayout, CONST AutoSize& ref)
+{
+	if (data == NULL || pLayout == NULL)
+	{
+		return FALSE;
+	}
+	if (pLayout->GetTotalNum() == 0)
+	{
+		Log("布局提交失败: 空布局(零控件)\n");
+		return FALSE;
+	}
+	if (!AppendSlot(pLayout, ref, FALSE, TRUE, FALSE))
+	{
+		return FALSE;
+	}
+	Log("布局提交: 追加第 %u 枚(控件=%zu; 可见, 基座; 全槽已绑定=%u)\n",
+		(unsigned)(data->dwSlotCount - 1), pLayout->GetTotalNum(), (unsigned)CountBoundCtrls());
+	return TRUE;
+}
+
+// 函数: SetLayoutVisible
+// 描述: 设置指定槽的可见性(不可见的布局不参与本帧渲染)
+BOOL Dispatch::SetLayoutVisible(DWORD index, BOOL bVisible)
+{
+	if (data == NULL || index >= data->dwSlotCount)
+	{
+		return FALSE;
+	}
+	data->pSlots[index].bVisible = (bVisible != FALSE) ? TRUE : FALSE;
+	return TRUE;
+}
+
+// 函数: SetLayoutNested
+// 描述: 设置指定槽的嵌套状态(TRUE = 按 Flex 渲染, 沿用前一枚基座布局的窗口段; FALSE = 基座渲染)
+BOOL Dispatch::SetLayoutNested(DWORD index, BOOL bNested)
+{
+	if (data == NULL || index >= data->dwSlotCount)
+	{
+		return FALSE;
+	}
+	data->pSlots[index].bNested = (bNested != FALSE) ? TRUE : FALSE;
+	return TRUE;
+}
+
+// 函数: GetLayoutState
+// 描述: 取指定槽的可见性与嵌套状态(越界返回 FALSE)
+BOOL Dispatch::GetLayoutState(DWORD index, BOOL* pbVisible, BOOL* pbNested)
+{
+	if (data == NULL || index >= data->dwSlotCount)
+	{
+		return FALSE;
+	}
+	if (pbVisible != NULL) { *pbVisible = data->pSlots[index].bVisible; }
+	if (pbNested != NULL) { *pbNested = data->pSlots[index].bNested; }
+	return TRUE;
 }
 
 // 函数: GetFontSize
@@ -273,7 +415,7 @@ DWORD Dispatch::GetWndCount()
 }
 
 // 函数: GetWndRect
-// 描述: 取布局窗口矩形(桌面位置取自窗口位置记录; 客户区尺寸取文档 autosize 推导值)
+// 描述: 取主布局窗口矩形(桌面位置取自首枚布局的窗口件位置记录; 客户区尺寸取推导值)
 BOOL Dispatch::GetWndRect(LONG* x, LONG* y, DWORD* w, DWORD* h)
 {
 	if (data == NULL || data->bReady == FALSE)
@@ -281,9 +423,9 @@ BOOL Dispatch::GetWndRect(LONG* x, LONG* y, DWORD* w, DWORD* h)
 		return FALSE;
 	}
 	// 位置随窗口件同步(窗口件缺失时保持上次值): 建窗几何与渲染目标结算共用同一真源
-	if (data->pLayout != NULL)
+	if (data->dwSlotCount > 0 && data->pSlots[0].pLayout != NULL)
 	{
-		CtrlInfo* pWnd = data->pLayout->GetLayoutBase(CTRL_TYPE_WND);
+		CtrlInfo* pWnd = data->pSlots[0].pLayout->GetLayoutBase(CTRL_TYPE_WND);
 		if (pWnd != NULL)
 		{
 			data->nWndX = (LONG)pWnd->position.x;
@@ -309,7 +451,7 @@ CONST BOOL* Dispatch::GetExitAddress()
 }
 
 // 函数: IsReady
-// 描述: 调度层是否就绪(成员块已分配且场景已载入)
+// 描述: 调度层是否就绪(成员块已分配且至少一枚布局已装配)
 BOOL Dispatch::IsReady()
 {
 	if (data != NULL && data->bReady != FALSE)
@@ -481,7 +623,7 @@ VOID Dispatch::PrintRenderProof(LPCSTR lpszTag)
 		(lpszTag != NULL) ? lpszTag : "-",
 		(unsigned)((data != NULL) ? data->dwFrameCount : 0), (unsigned)dwSegments,
 		(unsigned)dwCmdLists, (long long)llVtx, (long long)llIdx,
-		(unsigned)dwResizes, (unsigned)dwLastW, (unsigned)dwLastH, GetLayout().GetTotalNum(),
+		(unsigned)dwResizes, (unsigned)dwLastW, (unsigned)dwLastH, (size_t)CountTotalCtrls(),
 		ShowStateName((WndShowState)((data != NULL) ? data->dwLastShowState : 0)),
 		(unsigned)((data != NULL) ? data->dwLastVisible : 0), (unsigned)dwStandard);
 }

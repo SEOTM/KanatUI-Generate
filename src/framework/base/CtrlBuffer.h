@@ -8,7 +8,7 @@
 // 文件: CtrlBuffer.h
 // 描述: 控件缓冲的约定与装配回收 —— 逐类型缓冲的数据布局、容量常量、控件缺省文案、
 //       文本通道取址, 以及缓冲的分配/初始化/写回/回收(接口契约见同目录 CtrlBuffer.md)
-// 说明: ① 数据布局与容量是控件库与装配期的共同约定, 只依赖 framework/base 与 common;
+// 说明: ① 数据布局与容量是控件库与装配期的共同约定, 只依赖 framework/base(含 mem)与 C 运行时;
 //       ② 类型语义(含"是否文本类")归 framework/base/ControlSpec.h;
 //       ③ 容量一律随缓冲头走(CtrlInfo::bufferInfo.size), 常量只用于装配期分配;
 //       ④ 本模块不含绘制、不含 UI 库类型。

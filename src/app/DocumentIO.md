@@ -12,7 +12,7 @@
 2. **不做四级探测**: 启动加载链的级序与内置资源取件归 `app\DocumentSource`; 本模块只提供“按路径载入”与
    “按内存缓冲载入”两个入口。
 3. **不做解析与生成**: 读方向(内容嗅探 + JSON / bin 解析)归 `framework\LayoutSolver`, 写方向(规范 JSON / bin
-   字节流 + 备份 + 临时文件 + 原子替换)归 `editor\LayoutWriter`。依赖方向为 `app → doc / framework / editor / common`,
+   字节流 + 备份 + 临时文件 + 原子替换)归 `editor\LayoutWriter`。依赖方向为 `app → doc / framework / editor`,
    不引编辑器命令头(命令本体只以函数指针持有)。
 4. **不做编辑命令**: “追加布局”的命令本体归 `editor\EditorCommands`, 本模块只经命令面回调请求。
 

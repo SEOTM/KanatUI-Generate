@@ -134,14 +134,15 @@ GenUI\
 ├─ src\
 │  ├─ main.cpp                 进程入口（只调用宿主）
 │  ├─ app\                     应用层：双窗口宿主 AppHost、应用主类 Application、宿主上下文、文档 I/O 与会话
-│  ├─ common\                  通用基础设施：内存管理（Arena / MemPool / SecureBuffer）、CRC32、资源加载、环境
 │  ├─ doc\                     文档领域层：文档承载者与结构一致性校验
 │  ├─ editor\                  编辑器层：编辑器外壳逻辑、编辑命令、写方向（LayoutWriter）、选中态叠加件
 │  ├─ framework\               框架层（可迁移复用，不含编辑器语义）
-│  │  ├─ base\                 基础设计量、控件类型契约、控件缓冲、文本宽度
+│  │  ├─ base\                 基础设计量、控件类型契约、控件缓冲、文本宽度、平台环境件（AppEnv）
+│  │  ├─ base\mem\             内存设施：MemoryManager 分配器与 AllocatorHub 会话分配器
+│  │  ├─ base\util\            纯算法件：FileCodec（CRC32）
 │  │  ├─ render\               渲染能力表 + ImGui 实现（宿主 / D3D11 / 控件库 / 部件层）
 │  │  ├─ layout\               布局对象、中间态、构建原语、读方向解析、渲染出口、几何解算
-│  │  └─ dispatch\             帧间事件、事件绑定表、调度层
+│  │  └─ dispatch\             帧间事件、事件绑定表、调度层、资源与路径解析（ResourceLoader）
 │  └─ **\*.md                  每个源文件模块一份接口文档
 ├─ cmake\                      内置文档资源脚本（第 3/4 级）
 ├─ tools\                      json2bin.py（构建期 bin 生成）、inject-nuget.ps1

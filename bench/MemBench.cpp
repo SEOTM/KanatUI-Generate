@@ -1,18 +1,20 @@
 // ================================
 // 工装: MemBench
-// 描述: MemoryManager(SecureBuffer / Arena / MemPool)的**契约测试 + 基准测试**
-//       ① 契约测试: 对齐、不重叠、容量边界、归属查询、回收语义、安全清零
-//       ② 微基准: 三分配器的分配延迟与 MemPool 的回收吞吐
+// 描述: MemoryManager(Arena / MemPool)的契约测试 + 基准测试
+//       ① 契约测试: 对齐、不重叠、容量边界、归属查询、回收语义
+//       ② 微基准: 两分配器的分配延迟与 MemPool 的回收吞吐
 //       ③ 工程负载: 按 GenUI 的真实量级(布局数/控件数/缓冲尺寸/churn 模式)取三种典型负载,
 //          对照"旧口径(单一笼统线性池)"与"新口径(按用途选型)"
 // 用法: MemBench [报告输出路径.md]
 // 说明: 纯控制台工装, 只依赖 MemoryManager 与 Win32; 不参与 GenUI 产物构建。
+// 注: 2026-10-23 框架同步 Kanat 后, MemoryManager 删除 SecureBuffer、Arena::Mark/Rewind、
+//     MemPool::SlabCount; 本工装随之只测 Arena / MemPool, 代际回收改用 Arena::Reset。
 // ================================
 #include <windows.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
-#include "../src/common/MemoryManager.h"
+#include "../src/framework/base/mem/MemoryManager.h"
 
 // ================================
 // 区域: 常量与报告
@@ -125,7 +127,7 @@ static BOOL VerifyFingerprint(CONST BYTE* p, size_t size, BYTE seed)
 // ================================
 
 // 函数: TestArenaContract
-// 描述: Arena 契约: 对齐 / 不重叠 / 边界 / Reset / Mark-Rewind / Contains
+// 描述: Arena 契约: 对齐 / 不重叠 / 边界 / Reset / Contains
 static VOID TestArenaContract()
 {
 	Say("[契约] Arena");
@@ -170,108 +172,18 @@ static VOID TestArenaContract()
 		BufferInfo b = arena.Allocate(arena.Capacity() + 1);
 		Check(b.buffer == nullptr && b.size == 0, "Arena: 超出容量返回 { nullptr, 0 }");
 	}
-	// 3. Mark / Rewind: 回退后同一地址被复用; 非法标记被忽略
-	{
-		size_t mark = arena.Mark();
-		BufferInfo a = arena.Allocate(128);
-		arena.Rewind(mark);
-		Check(arena.Used() == mark, "Arena: Rewind 回到标记点");
-		BufferInfo b = arena.Allocate(128);
-		Check(a.buffer == b.buffer, "Arena: Rewind 后同一地址被复用");
-		size_t usedNow = arena.Used();
-		arena.Rewind(usedNow + 4096);
-		Check(arena.Used() == usedNow, "Arena: 大于当前用量的 Rewind 被忽略(不回卷到非法位置)");
-	}
-	// 4. Reset: 全部失效并回到起点
+	// 3. Reset: 全部失效并回到起点
 	{
 		arena.Reset();
 		Check(arena.Used() == 0, "Arena: Reset 归零");
 	}
-	// 5. Contains: 池内 / 边界 / 池外 / 空指针
+	// 4. Contains: 池内 / 边界 / 池外 / 空指针
 	{
 		BufferInfo b = arena.Allocate(16);
 		Check(arena.Contains(b.buffer) == TRUE, "Arena: Contains 命中池内首址");
 		Check(arena.Contains((BYTE*)b.buffer + arena.Capacity() - 1 - arena.Used() + 15) == TRUE, "Arena: Contains 命中池内末字节");
 		Check(arena.Contains((BYTE*)b.buffer - 1) == FALSE, "Arena: Contains 拒绝池前地址");
 		Check(arena.Contains(nullptr) == FALSE, "Arena: Contains 拒绝 nullptr");
-	}
-}
-
-// 函数: TestSecureBufferContract
-// 描述: SecureBuffer 契约: 对齐 / 不重叠 / 安全清零 / 保护切换 / Contains
-static VOID TestSecureBufferContract()
-{
-	Say("[契约] SecureBuffer");
-	SecureBuffer sec(64 * 1024);
-
-	// 1. 非 8 倍数请求下相邻分配互不重叠(与旧 SecureBuffer 同一纪律)
-	{
-		BYTE* apPrev[32];
-		size_t aSize[32];
-		DWORD dwBad = 0;
-		size_t aReq[3] = { 12, 24, 56 };
-		for (DWORD i = 0; i < 32; ++i)
-		{
-			BufferInfo b = sec.Allocate(aReq[i % 3]);
-			if (b.buffer == nullptr)
-			{
-				dwBad++;
-				continue;
-			}
-			apPrev[i] = (BYTE*)b.buffer;
-			aSize[i] = b.size;
-			Fingerprint((BYTE*)b.buffer, b.size, (BYTE)(0x40 + i));
-		}
-		Check(dwBad == 0, "SecureBuffer: 分配非空");
-		for (DWORD i = 0; i < 32; ++i)
-		{
-			if (!VerifyFingerprint(apPrev[i], aSize[i], (BYTE)(0x40 + i)))
-			{
-				dwBad++;
-			}
-		}
-		Check(dwBad == 0, "SecureBuffer: 相邻分配互不重叠");
-	}
-	// 2. 容量边界
-	{
-		BufferInfo b = sec.Allocate(sec.Capacity() + 1);
-		Check(b.buffer == nullptr && b.size == 0, "SecureBuffer: 超出容量返回 { nullptr, 0 }");
-	}
-	// 3. 安全清零: 写入后清零, 内容必须全 0(验证 RtlSecureZeroMemory 确实落盘)
-	{
-		BufferInfo b = sec.Allocate(256);
-		Check(b.buffer != nullptr, "SecureBuffer: 清零用例分配成功");
-		if (b.buffer != nullptr)
-		{
-			BYTE* p = (BYTE*)b.buffer;
-			memset(p, 0xAA, 256);
-			sec.SecureZero(0, 0);			// 边界: 零长度清零不得改动内容
-			BOOL bAllAA = TRUE;
-			for (DWORD i = 0; i < 256; ++i)
-			{
-				if (p[i] != 0xAA) { bAllAA = FALSE; }
-			}
-			Check(bAllAA == TRUE, "SecureBuffer: 零长度清零不改动内容");
-			sec.SecureZeroAll();
-			BOOL bAllZero = TRUE;
-			for (DWORD i = 0; i < 256; ++i)
-			{
-				if (p[i] != 0x00) { bAllZero = FALSE; }
-			}
-			Check(bAllZero == TRUE, "SecureBuffer: SecureZeroAll 后内容全 0");
-		}
-	}
-	// 4. 页级保护切换(只读 / 读写往返成功)
-	{
-		BOOL bRo = sec.SetReadOnly();
-		BOOL bRw = sec.SetReadWrite();
-		Check(bRo == TRUE && bRw == TRUE, "SecureBuffer: SetReadOnly / SetReadWrite 往返成功");
-		Check(sec.SetNoAccess() == TRUE, "SecureBuffer: SetNoAccess 成功");
-		Check(sec.SetReadWrite() == TRUE, "SecureBuffer: 复位为读写成功");
-	}
-	// 5. Contains
-	{
-		Check(sec.Contains(nullptr) == FALSE, "SecureBuffer: Contains 拒绝 nullptr");
 	}
 }
 
@@ -403,7 +315,6 @@ static BOOL TestAllocatorContract()
 {
 	Say("--- [1] 契约测试 ---");
 	TestArenaContract();
-	TestSecureBufferContract();
 	TestMemPoolContract();
 	Say("契约测试: 通过 %u / 失败 %u", (unsigned)g_dwPass, (unsigned)g_dwFail);
 	return (g_dwFail == 0) ? TRUE : FALSE;
@@ -421,27 +332,14 @@ static VOID BenchAllocMicro()
 	constexpr size_t CAP = 256u * 1024u * 1024u;
 	static const size_t aSizes[8] = { 16, 24, 56, 128, 328, 1024, 3092, 4096 };
 	Say("--- [2] 微基准: 分配延迟(ns/op, N=%u, 容量 256MB) ---", (unsigned)N);
-	Say("%-8s %14s %14s %16s %20s", "尺寸", "SecureBuffer", "Arena", "MemPool(alloc)", "MemPool(alloc+free)");
+	Say("%-8s %14s %16s %20s", "尺寸", "Arena", "MemPool(alloc)", "MemPool(alloc+free)");
 	for (DWORD s = 0; s < 8; ++s)
 	{
 		size_t size = aSizes[s];
-		double dSecNs = 0.0;
 		double dAreNs = 0.0;
 		double dPoolNs = 0.0;
 		double dPoolFreeNs = 0.0;
 
-		// SecureBuffer: 分配 N 次(不可回收)
-		{
-			SecureBuffer sec(CAP);
-			double t0 = NowMs();
-			DWORD dwOk = 0;
-			for (DWORD i = 0; i < N; ++i)
-			{
-				if (sec.Allocate(size).buffer != nullptr) { dwOk++; }
-			}
-			double t1 = NowMs();
-			dSecNs = (dwOk > 0) ? (t1 - t0) * 1e6 / (double)dwOk : 0.0;
-		}
 		// Arena: 分配 N 次(不可回收)
 		{
 			Arena arena(CAP);
@@ -476,7 +374,7 @@ static VOID BenchAllocMicro()
 			double t3 = NowMs();
 			dPoolFreeNs = (t3 - t2) * 1e6 / (double)N;
 		}
-		Say("%-8u %14.1f %14.1f %16.1f %20.1f", (unsigned)size, dSecNs, dAreNs, dPoolNs, dPoolFreeNs);
+		Say("%-8u %14.1f %16.1f %20.1f", (unsigned)size, dAreNs, dPoolNs, dPoolFreeNs);
 	}
 	Say("注: 线性分配是纯指针推进(与尺寸无关的常数级); MemPool 的 alloc 列随尺寸上升是 slab **补充成本**");
 	Say("    (空闲链表为空时要 VirtualAlloc 一个 64KB slab 并切块, 大块每 slab 只切出十几块 ⇒ 摊销显形);");
@@ -534,9 +432,8 @@ static VOID BenchChurnMicro()
 		{
 			if (aLive[i].buffer != nullptr) { pool.Free(aLive[i]); }
 		}
-		Say("MemPool(存活集 %u): 失败 %u 次; slab %u 个 = 占用 %u KB; 耗时 %.1f ms",
-			(unsigned)LIVE, (unsigned)dwFail, (unsigned)pool.SlabCount(),
-			(unsigned)(pool.SlabCount() * 64), t1 - t0);
+		Say("MemPool(存活集 %u): 失败 %u 次; 耗时 %.1f ms",
+			(unsigned)LIVE, (unsigned)dwFail, t1 - t0);
 	}
 }
 
@@ -675,9 +572,8 @@ static VOID BenchWorkloadEditChurn()
 			}
 		}
 		double t1 = NowMs();
-		Say("MemPool + 回收: 失败 %u 次; 回退 %u 次; slab %u 个 = %u KB(有界); 耗时 %.1f ms",
-			(unsigned)dwFail, (unsigned)dwFallback, (unsigned)pool.SlabCount(),
-			(unsigned)(pool.SlabCount() * 64), t1 - t0);
+		Say("MemPool + 回收: 失败 %u 次; 回退 %u 次; 耗时 %.1f ms",
+			(unsigned)dwFail, (unsigned)dwFallback, t1 - t0);
 		if (lpName != nullptr && pool.Contains(lpName) == TRUE) { pool.Free((VOID*)lpName); }
 		if (lpEvent != nullptr && pool.Contains(lpEvent) == TRUE) { pool.Free((VOID*)lpEvent); }
 		if (apRawType != nullptr && pool.Contains(apRawType) == TRUE) { pool.Free((VOID*)apRawType); }
@@ -685,7 +581,7 @@ static VOID BenchWorkloadEditChurn()
 }
 
 // 函数: BenchWorkloadReopen
-// 描述: 负载 C: 反复打开文档 100 次 —— 线性池单调增长 vs Arena Mark/Rewind 代际回收
+// 描述: 负载 C: 反复打开文档 100 次 —— 线性池单调增长 vs Arena 整代 Reset
 static VOID BenchWorkloadReopen()
 {
 	constexpr DWORD N = 100;
@@ -705,51 +601,33 @@ static VOID BenchWorkloadReopen()
 			(unsigned)dwFail, (unsigned)(linear.Used() / 1024),
 			(unsigned)(linear.Used() / 1024 / N), t1 - t0);
 	}
-	// 新口径: 文档代际驻"文档 Arena", 每次打开前 Mark 到代际起点(或 Reset), 关闭时 Rewind
+	// 新口径: 文档代际驻"文档 Arena", 每次打开前 Reset 整代(框架已删 Mark/Rewind), 关闭时随析构释放
 	{
 		Arena docArena(64u * 1024u * 1024u);
-		Arena sessionArena(4u * 1024u * 1024u);		// 会话级数据(外壳快照等)另池存放, 不参与 Rewind
-		size_t genMark = docArena.Mark();
+		Arena sessionArena(4u * 1024u * 1024u);		// 会话级数据(外壳快照等)另池存放, 不参与 Reset
 		DWORD dwFail = 0;
 		double t0 = NowMs();
 		for (DWORD i = 0; i < N; ++i)
 		{
 			// 会话级数据(不随文档代际回收)
 			sessionArena.Allocate(GENUI_STR);
-			// 文档代际数据
-			docArena.Rewind(genMark);
+			// 文档代际数据: 整代复位后重建
+			docArena.Reset();
 			if (BuildDocLinear(docArena) == 0) { dwFail++; }
 		}
 		double t1 = NowMs();
-		Say("Arena 代际回收(Mark/Rewind): 失败 %u 次; 文档池占用 %u KB(单代峰值, 有界); 会话池 %u KB; 耗时 %.1f ms",
+		Say("Arena 整代回收(Reset): 失败 %u 次; 文档池占用 %u KB(单代峰值, 有界); 会话池 %u KB; 耗时 %.1f ms",
 			(unsigned)dwFail, (unsigned)(docArena.Used() / 1024),
 			(unsigned)(sessionArena.Used() / 1024), t1 - t0);
 	}
 }
 
 // 函数: BenchTeardown
-// 描述: 负载 D: 析构代价 —— 128MB 池"退出前安全清零"vs Arena 直接释放
+// 描述: 负载 D: 128MB Arena 的构造 + 触碰 + 析构代价
 static VOID BenchTeardown()
 {
-	Say("--- [7] 负载 D: 128MB 池的析构代价(旧口径退出前 SecureZeroAll) ---");
+	Say("--- [7] 负载 D: 128MB Arena 的析构代价 ---");
 	constexpr size_t CAP = 128u * 1024u * 1024u;
-	{
-		double t0 = NowMs();
-		{
-			SecureBuffer* p = new SecureBuffer(CAP);
-			// 触碰 1/4 页面, 模拟真实使用(避免全是未触页导致的零开销假象)
-			BufferInfo b = p->Allocate(CAP / 4);
-			if (b.buffer != nullptr)
-			{
-				memset(b.buffer, 1, b.size);
-			}
-			double t1 = NowMs();
-			Say("SecureBuffer(128MB) 构造 + 触碰 32MB: %.1f ms", t1 - t0);
-			delete p;						// 析构: SecureZeroAll(128MB) + VirtualFree
-		}
-		double t2 = NowMs();
-		Say("SecureBuffer 析构(128MB 安全清零 + 释放): %.1f ms", t2 - t0);
-	}
 	{
 		double t0 = NowMs();
 		Arena* p = new Arena(CAP);
@@ -805,9 +683,8 @@ int main(int argc, char** argv)
 	Say("");
 	Say("--- 结论 ---");
 	Say("1. 契约: 对齐 16B、相邻分配不重叠、容量/超限/零大小边界、跨池 Free 忽略、归属查询均通过。");
-	Say("2. 线性分配(SecureBuffer / Arena)单次分配是纯指针推进, 延迟最低; 但**不可回收** ⇒ 编辑期 churn 与反复打开文档会单调增长。");
+	Say("2. 线性分配(Arena)单次分配是纯指针推进, 延迟最低; 但**不可回收** ⇒ 编辑期 churn 与反复打开文档会单调增长。");
 	Say("3. MemPool 单次分配/回收为 O(1) 空闲链表操作, 同尺寸复用后存活集有界 ⇒ 适合不定生命周期小对象。");
-	Say("4. SecureBuffer 的页级保护与退出清零是**敏感数据**的代价; 普通 UI 数据不应承担(见负载 D)。");
 	Say("");
 	Say("契约测试: 通过 %u / 失败 %u", (unsigned)g_dwPass, (unsigned)g_dwFail);
 	if (g_pReport != NULL)

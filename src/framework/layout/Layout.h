@@ -1,5 +1,5 @@
 #pragma once
-#include "common/MemoryManager.h"
+#include "framework/base/mem/MemoryManager.h"
 #include "framework/base/ControlSpec.h"
 #include <stdint.h>
 // ================================

@@ -7,7 +7,7 @@
 // 区域: 文件包含区
 // ================================
 #include <string.h>
-#include "common/AllocatorHub.h"
+#include "framework/base/mem/AllocatorHub.h"
 
 // ================================
 // 区域: 文件内静态状态
@@ -42,16 +42,19 @@ VOID AllocatorHub::Release()
 	}
 }
 // 函数: GetArena
+// 描述: 取应用统一线性分配器(未建立 ⇒ NULL)
 Arena* AllocatorHub::GetArena()
 {
 	return sArena;
 }
 // 函数: GetSmallPool
+// 描述: 取应用小对象池(恒非 NULL)
 MemPool* AllocatorHub::GetSmallPool()
 {
 	return &sSmallPool;
 }
 // 函数: AllocBuffer
+// 描述: 从线性分配器分配一段内存
 BufferInfo AllocatorHub::AllocBuffer(size_t size)
 {
 	BufferInfo ret{ nullptr, 0 };

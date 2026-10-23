@@ -8,8 +8,8 @@
 级序是口径、形态由内容决定: `bBin` 只是来源标注, 四条读入口一律由载入侧按内容嗅探分派解析。
 
 本模块只探测并给出来源: 不做载入(解析与构建归载入侧), 不做"载入被拒 ⇒ 该级并入已试掩码 ⇒ 继续探测"的
-循环(归调用方), 也不做通用加载原语(exe 目录缓存 / 路径拼接 / 资源节读取与补 `'\0'` 归
-`common\ResourceLoader`); 本模块不持状态, 无静态字段、无初始化与释放步骤, 内存取自会话分配器。
+循环(归调用方), 也不做通用加载原语(exe 目录缓存 / 路径拼接归
+`framework\dispatch\ResourceLoader`; 资源节读取与补 `'\0'` 由本文件完成); 本模块不持状态, 无静态字段、无初始化与释放步骤, 内存取自会话分配器。
 
 本模块包含以下编程接口:
 
@@ -126,7 +126,7 @@ BOOL GetEmbeddedDoc(
 ### 注解
 
 资源 ID 与类型见 `src\app\resource.h` 的 `IDR_GENUI_JSON`(类型 `"JSON"`)。取件与池分配由
-`common\ResourceLoader` 的 `LoadResource` 完成, 本函数只固定资源 ID、类型与"补 `'\0'`"这三项口径。
+本文件的 `LoadEmbeddedResource` 完成, 本函数只固定资源 ID、类型与"补 `'\0'`"这三项口径。
 
 唯一消费点在本模块内的 `ResolveDocumentSource` 第 4 级 ⇒ 对外视为内部取件件, 不单独使用; 需要文档数据时
 走 `ResolveDocumentSource` 取结果, 由它决定用哪一级。
@@ -231,6 +231,6 @@ struct DocSource
 | 标头 | `app/DocumentSource.h`(`src\app\DocumentSource.h`) |
 | 实现 | `src\app\DocumentSource.cpp` |
 | 命名空间 | 命名空间 `DocumentSource`(三个函数) + 全局结构 `DocSource` |
-| 依赖 | 工程内: `common\ResourceLoader`(`GetFilePath` / `LoadResource`)、`app\resource.h`(`IDR_GENUI_JSON` / `IDR_GENUI_BIN`); 系统: `kernel32`(文件属性查询与资源 API)、CRT(`printf`) |
+| 依赖 | 工程内: `framework\dispatch\ResourceLoader`(`GetFilePath`)、`framework\base\mem\AllocatorHub`(资源节副本)、`app\resource.h`(`IDR_GENUI_JSON` / `IDR_GENUI_BIN`); 系统: `kernel32`(文件属性查询与资源 API)、CRT(`printf`) |
 | 平台 | Windows; 第 3/4 级依赖随 exe 携带的资源节, 缺失时该两级按"未命中"处理 |
 | 线程安全 | 否(无内部同步; 结果写入调用方提供的结构, 取件内存来自共享会话池 ⇒ 跨线程调用需外部串行) |

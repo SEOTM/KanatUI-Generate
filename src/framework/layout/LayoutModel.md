@@ -555,6 +555,6 @@ private:
 | 标头 | `framework/layout/LayoutModel.h`(`src\framework\layout\LayoutModel.h`) |
 | 实现 | `src\framework\layout\LayoutModel.cpp`;结构定义在头文件内 |
 | 命名空间 | 全局作用域 |
-| 依赖 | `minwindef.h` · `Layout` · `LayoutBuilder` · `common/MemoryManager.h` · `ucrt` |
+| 依赖 | `minwindef.h` · `Layout` · `LayoutBuilder` · `framework/base/mem/MemoryManager.h` · `ucrt` |
 | 平台 | Windows 全版本 |
 | 线程安全 | 不适用(值类型, 按值传递) |

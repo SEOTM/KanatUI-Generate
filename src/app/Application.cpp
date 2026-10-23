@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include "app/Application.h"
 #include "app/HostContext.h"		// 宿主能力与窗口句柄
-#include "common/AllocatorHub.h"	// 会话分配器
-#include "common/ResourceLoader.h"	// exe 目录与资源加载原语
+#include "framework/base/mem/AllocatorHub.h"	// 会话分配器
+#include "framework/dispatch/ResourceLoader.h"	// exe 目录与路径拼接
 #include "framework/layout/GeometrySolver.h"	// 几何解算与模式/基准换算
 #include "framework/base/BasicDesign.h"
 #include "framework/base/CtrlBuffer.h"		// 控件缓冲(数据结构 / 容量 / 取址 / 构造与回收)

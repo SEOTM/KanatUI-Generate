@@ -1,5 +1,5 @@
 #include "framework/layout/LayoutModel.h"
-#include "common/MemoryManager.h"
+#include "framework/base/mem/MemoryManager.h"
 #include <Windows.h>
 #include <string.h>
 

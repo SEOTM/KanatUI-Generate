@@ -8,7 +8,7 @@
 #include <string.h>
 #include "app/Application.h"		// 就绪判据 Application::IsReady()(原 data == NULL 判据的等价只读入口)
 #include "app/FlexHost.h"
-#include "common/AllocatorHub.h"	// 会话分配器(条目 / 活动指针缓存 / 字符串池化)
+#include "framework/base/mem/AllocatorHub.h"	// 会话分配器(条目 / 活动指针缓存 / 字符串池化)
 #include "framework/base/CtrlBuffer.h"		// 控件缓冲(容量口径 / 取址 / 回收)
 #include "framework/layout/LayoutBuilder.h"	// 布局对象构建与整枚布局的缓冲回收
 #include "framework/layout/LayoutSolver.h"	// 外壳源解析器(中间态 + 逐布局规格)

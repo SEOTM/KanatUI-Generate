@@ -4,9 +4,76 @@
 // ================================
 #include <windows.h>
 #include <stdio.h>						// printf(逐级诊断行)
+#include <string.h>						// memcpy(内置资源拷贝)
 #include "app/DocumentSource.h"
 #include "app/resource.h"				// IDR_GENUI_JSON / IDR_GENUI_BIN(内置文档资源 ID)
-#include "common/ResourceLoader.h"		// 通用加载原语: GetFilePath / LoadResource(exe 目录 + 资源节 → 池)
+#include "framework/dispatch/ResourceLoader.h"		// exe 目录与路径拼接(GetFilePath)
+#include "framework/base/mem/AllocatorHub.h"		// 会话分配器(内置资源副本)
+
+
+// ================================
+// 区域: 文件内静态工具区
+// ================================
+
+// ================================
+// 函数: LoadEmbeddedResource
+// 描述: 读取随 exe 内置的资源节字节并拷进会话分配器(末尾补一位 '\0')
+// 说明: 框架层 ResourceLoader 只提供 exe 目录与路径拼接(2026-10-23 归位后不再承担资源节读取);
+//   内置资源读取是本工程加载链第 3/4 级的应用侧设施, 故实现留在本文件。
+//   资源字节不保证以 '\0' 结尾, 而 JSON 解析需要 NUL ⇒ 统一补一位;
+//   补的字节不计入 pcbData(bin 解析按显式长度, 不受影响)。
+// 参数:
+//		IN	dwResId:	资源 ID(由 app\resource.h 定义)
+//		IN	szResType:	资源类型串(如 "JSON" / "BIN")
+//		OUT	ppData:		数据首址(会话分配器副本; 失败置 NULL)
+//		OUT	pcbData:	字节数(不含补的 '\0')
+// 返回:
+//		BOOL: TRUE = 命中(ppData/pcbData 有效)
+// ================================
+static BOOL LoadEmbeddedResource(DWORD dwResId, LPCSTR szResType, LPVOID* ppData, DWORD* pcbData)
+{
+	BOOL bRet = FALSE;
+	HRSRC hRes = NULL;
+	HGLOBAL hGlobal = NULL;
+	LPVOID pLock = NULL;
+	DWORD dwSize = 0;
+	Arena* pArena = AllocatorHub::GetArena();
+	if (pArena == NULL || szResType == NULL || ppData == NULL || pcbData == NULL)
+	{
+		return bRet;
+	}
+	*ppData = NULL;
+	*pcbData = 0;
+	hRes = FindResourceA(NULL, MAKEINTRESOURCEA(dwResId), szResType);
+	if (hRes == NULL)
+	{
+		return bRet;
+	}
+	hGlobal = LoadResource(NULL, hRes);
+	if (hGlobal == NULL)
+	{
+		return bRet;
+	}
+	pLock = LockResource(hGlobal);
+	dwSize = SizeofResource(NULL, hRes);
+	if (pLock == NULL || dwSize == 0)
+	{
+		return bRet;
+	}
+	{
+		BufferInfo buf = pArena->Allocate((size_t)dwSize + 1);
+		if (buf.buffer == NULL || buf.size < (size_t)dwSize + 1)
+		{
+			return bRet;
+		}
+		memcpy(buf.buffer, pLock, dwSize);
+		((CHAR*)buf.buffer)[dwSize] = '\0';
+		*ppData = buf.buffer;
+		*pcbData = dwSize;
+	}
+	bRet = TRUE;
+	return bRet;
+}
 
 // ================================
 // 区域: 启动加载链区(四级顺序探测)
@@ -23,14 +90,14 @@
 // 返回: TRUE 命中(ppData/pcbData 有效; pcbData 不含补的 '\0')
 BOOL DocumentSource::GetEmbeddedDoc(LPVOID* ppData, DWORD* pcbData)
 {
-	return ResourceLoader::LoadResource(IDR_GENUI_JSON, "JSON", ppData, pcbData);
+	return LoadEmbeddedResource(IDR_GENUI_JSON, "JSON", ppData, pcbData);
 }
 // 函数: GetEmbeddedDocBin
 // 描述: 取随 exe 内置的 bin 文档资源(加载链第 3 级 resource.res\GenUI.bin; 资源 ID/类型见 src\app\resource.h)
 // 返回: TRUE 命中(ppData/pcbData 有效; pcbData 不含补的 '\0')
 BOOL DocumentSource::GetEmbeddedDocBin(LPVOID* ppData, DWORD* pcbData)
 {
-	return ResourceLoader::LoadResource(IDR_GENUI_BIN, "BIN", ppData, pcbData);
+	return LoadEmbeddedResource(IDR_GENUI_BIN, "BIN", ppData, pcbData);
 }
 // 函数: ResolveDocumentSource
 // 描述: 按四级顺序探测可用文档源(命中即用), 逐级打印诊断行; 四级均不可用返回 FALSE

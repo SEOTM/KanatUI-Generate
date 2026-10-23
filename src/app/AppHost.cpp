@@ -18,7 +18,7 @@
 #include <string.h>
 
 #include "app/AppHost.h"
-#include "common/AppEnv.h"
+#include "framework/base/AppEnv.h"
 #include "framework/base/BasicDesign.h"
 #include "app/Application.h"
 #include "app/FlexHost.h"			// 内嵌(flex)窗口装配与查询

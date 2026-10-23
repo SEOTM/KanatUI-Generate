@@ -74,21 +74,30 @@ add_custom_command(
 # ================================
 # 源码清单(按层分组)
 #   framework\base           : 基础设计量 / 控件类型契约 / 控件缓冲(数据结构 · 容量 · 取址 · 装配与回收) / 函数指针 / 文本宽度
+#                              / 平台环境件(AppEnv; 2026-10-23 自 common 归位)
+#   framework\base\mem      : 内存设施(MemoryManager 分配器 + AllocatorHub 会话分配器; 2026-10-23 自 common 归位)
+#   framework\base\util     : 与框架语义无关的纯算法件(FileCodec 校验; 2026-10-23 自 common 归位)
 #   framework\render         : 渲染能力接口(Render.h)与具体渲染技术的实现(按技术名分目录)
 #   framework\render\imgui         : ImGui 宿主与图形后端设施(窗口 / 上下文 / 帧流程 / 消息循环 / D3D11)
 #   framework\render\imgui\ability : ImGui 侧渲染能力提供者(能力表的唯一填表处)
 #   framework\render\imgui\control : 控件库与部件层(逐控件绘制)
 #   framework\layout         : 布局子系统(布局对象 / 中间态模型 / 构建原语 / 读方向解算 / 渲染出口 / 几何解算)
-#   framework\dispatch       : 调度层(帧间事件 / 事件绑定表 / 调度与场景实现切片)
-#   app / doc / editor / common : 应用层(多布局文档 + 编辑器 + 预览与会话)
+#   framework\dispatch       : 调度层(帧间事件 / 事件绑定表 / 调度与场景实现切片 / 资源与路径解析)
+#   app / doc / editor       : 应用层(多布局文档 + 编辑器 + 预览与会话)
 # 说明: framework\dispatch 的 Dispatch / DispatchScene 随框架就位(与 Kanat 快照一致), 但本工程的宿主
 #       生命周期仍由 app\AppHost 驱动(多文档与编辑器协调面不走单文档调度层); 该两件不参与运行时接线。
+# 说明: 原 src\common 层已于 2026-10-23 取消(五件全部归位 framework; 与 Kanat 母本同构),
+#       应用层不再有 common 目录。
 # ================================
 set(GENUI_FRAMEWORK_SRC
+	src/framework/base/AppEnv.cpp
 	src/framework/base/BasicDesign.cpp
 	src/framework/base/ControlSpec.cpp
 	src/framework/base/CtrlBuffer.cpp
 	src/framework/base/TextWidth.cpp
+	src/framework/base/mem/AllocatorHub.cpp
+	src/framework/base/mem/MemoryManager.cpp
+	src/framework/base/util/FileCodec.cpp
 
 	src/framework/render/imgui/D3D11Manager.cpp
 	src/framework/render/imgui/ImGuiHost.cpp
@@ -106,6 +115,7 @@ set(GENUI_FRAMEWORK_SRC
 	src/framework/dispatch/Dispatch.cpp
 	src/framework/dispatch/DispatchScene.cpp
 	src/framework/dispatch/FrameEvent.cpp
+	src/framework/dispatch/ResourceLoader.cpp
 	src/framework/dispatch/UIEventHandler.cpp
 )
 
@@ -125,11 +135,6 @@ set(GENUI_APP_SRC
 	src/editor/GenEditor.cpp
 	src/editor/EditorCommands.cpp
 	src/editor/SelectionOverlay.cpp
-	src/common/AppEnv.cpp
-	src/common/FileCodec.cpp
-	src/common/AllocatorHub.cpp
-	src/common/ResourceLoader.cpp
-	src/common/MemoryManager.cpp
 )
 
 add_executable(GenUI

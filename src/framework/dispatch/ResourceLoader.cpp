@@ -6,8 +6,8 @@
 // ================================
 // 区域: 文件包含区
 // ================================
-#include "common/ResourceLoader.h"
-#include "common/AllocatorHub.h"
+#include "framework/dispatch/ResourceLoader.h"
+#include "framework/base/mem/AllocatorHub.h"
 
 // ================================
 // 区域: 文件内静态状态
@@ -39,11 +39,6 @@ VOID ResourceLoader::Init()
 		sExeDir = AllocatorHub::CopyString(szDir);
 	}
 }
-// 函数: GetExeDir
-LPCSTR ResourceLoader::GetExeDir()
-{
-	return (sExeDir != NULL) ? sExeDir : "";
-}
 // 函数: GetFilePath
 // 描述: 拼接 exe 目录与文件名(池内新串; 每次调用新分配)
 LPCSTR ResourceLoader::GetFilePath(LPCSTR filename)
@@ -67,50 +62,4 @@ BOOL ResourceLoader::FileExists(LPCSTR path)
 		return FALSE;
 	}
 	return (GetFileAttributesA(path) != INVALID_FILE_ATTRIBUTES) ? TRUE : FALSE;
-}
-// 函数: LoadResource
-// 描述: 读取随 exe 内置的资源节字节并拷进内存池(末尾补一位 '\0')
-BOOL ResourceLoader::LoadResource(DWORD dwResId, LPCSTR szResType, LPVOID* ppData, DWORD* pcbData)
-{
-	BOOL bRet = FALSE;
-	HRSRC hRes = NULL;
-	HGLOBAL hGlobal = NULL;
-	LPVOID pLock = NULL;
-	DWORD dwSize = 0;
-	Arena* lpArena = AllocatorHub::GetArena();
-	if (lpArena == NULL || szResType == NULL || ppData == NULL || pcbData == NULL)
-	{
-		return bRet;
-	}
-	*ppData = NULL;
-	*pcbData = 0;
-	hRes = FindResourceA(NULL, MAKEINTRESOURCEA(dwResId), szResType);
-	if (hRes == NULL)
-	{
-		return bRet;
-	}
-	hGlobal = LoadResource(NULL, hRes);
-	if (hGlobal == NULL)
-	{
-		return bRet;
-	}
-	pLock = LockResource(hGlobal);
-	dwSize = SizeofResource(NULL, hRes);
-	if (pLock == NULL || dwSize == 0)
-	{
-		return bRet;
-	}
-	{
-		BufferInfo buf = lpArena->Allocate((size_t)dwSize + 1);
-		if (buf.buffer == NULL || buf.size < (size_t)dwSize + 1)
-		{
-			return bRet;
-		}
-		memcpy(buf.buffer, pLock, dwSize);
-		((CHAR*)buf.buffer)[dwSize] = '\0';
-		*ppData = buf.buffer;
-		*pcbData = dwSize;
-	}
-	bRet = TRUE;
-	return bRet;
 }

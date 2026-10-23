@@ -6,7 +6,7 @@
 以及依控件类型分配并初始化缓冲、把文本按容量写回、回收单枚控件缓冲。缓冲一律取自会话小对象池
 (`AllocatorHub`),分配与回收成对;数据布局是控件库与装配期的共同约定。
 
-本模块属 **framework 层 · base**,只依赖 `framework/base/*` 与 `common/*`(分配原语、`BufferInfo`)以及
+本模块属 **framework 层 · base**,只依赖 `framework/base/*`(含 `mem/*` 的分配原语与 `BufferInfo`)以及
 C 运行时,**不依赖任何上层**(render / layout / dispatch),也不含任何 UI 库类型与绘制实现 ——
 它只回答"这枚控件的数据长什么样、多大、怎么取址、怎么释放",不回答"怎么画"。
 
@@ -781,6 +781,6 @@ VOID FreeCtrlBuffer(
 | 标头 | `framework/base/CtrlBuffer.h`(`src\framework\base\CtrlBuffer.h`) |
 | 实现 | `src\framework\base\CtrlBuffer.cpp`;数据约定与取址为头文件内联 |
 | 命名空间 | `CtrlBuffer`(装配与回收函数) · 全局(数据结构、常量与取址函数) |
-| 依赖 | `framework/base/ControlSpec.h` · `common/AllocatorHub.h` · `windows.h` · `stdlib.h` · `string.h` · `minwindef.h` · `stdint.h` · `stddef.h` |
+| 依赖 | `framework/base/ControlSpec.h` · `framework/base/mem/AllocatorHub.h` · `windows.h` · `stdlib.h` · `string.h` · `minwindef.h` · `stdint.h` · `stddef.h` |
 | 平台 | Windows 全版本 |
 | 线程安全 | 否(装配与回收操作会话分配器与小对象池);数据布局读取与文本取址为纯函数 |

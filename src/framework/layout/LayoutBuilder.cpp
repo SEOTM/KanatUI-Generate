@@ -5,7 +5,7 @@
 #include <windows.h>
 #include <string.h>						// memcpy(类型缓冲的逐字节复制)
 #include "framework/layout/LayoutBuilder.h"
-#include "common/AllocatorHub.h"		// 池内分配与字符串拷贝原语(AllocBuffer / AllocSmall / CopyString)
+#include "framework/base/mem/AllocatorHub.h"		// 池内分配与字符串拷贝原语(AllocBuffer / AllocSmall / CopyString)
 #include "framework/base/BasicDesign.h"
 #include "framework/base/CtrlBuffer.h"		// 控件缓冲约定与构造回收(PrepareCtrlBuffer / FreeCtrlBuffer)
 #include "framework/dispatch/UIEventHandler.h"	// event 名 → 处理函数绑定表

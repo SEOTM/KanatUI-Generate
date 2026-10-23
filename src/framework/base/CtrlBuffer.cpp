@@ -11,7 +11,7 @@
 #include <stdlib.h>						// atof / atoi(声明文本到数值的初值换算)
 #include <string.h>						// strcpy_s / strncpy_s(文本写入)
 #include "framework/base/CtrlBuffer.h"
-#include "common/AllocatorHub.h"		// 控件缓冲的分配/回收原语
+#include "framework/base/mem/AllocatorHub.h"		// 控件缓冲的分配/回收原语
 
 // ================================
 // 命名空间: CtrlBuffer(控件缓冲的构造与释放)

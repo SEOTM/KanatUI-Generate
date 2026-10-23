@@ -10,8 +10,8 @@
 #include "app/DocumentIO.h"
 #include "doc/DocConsistency.h"
 #include "doc/Document.h"
-#include "common/AllocatorHub.h"
-#include "common/ResourceLoader.h"
+#include "framework/base/mem/AllocatorHub.h"
+#include "framework/dispatch/ResourceLoader.h"
 #include "framework/layout/LayoutSolver.h"
 #include "editor/LayoutWriter.h"
 

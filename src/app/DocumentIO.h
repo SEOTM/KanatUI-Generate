@@ -11,7 +11,7 @@
 //     (宿主在命令面接线点注入; 未注入 ⇒ 新建的该步显式降级)。
 //   - 读写格式判据经 framework\LayoutSolver(读方向, 内容嗅探)与 editor\LayoutWriter(写方向),
 //     本模块只做"入口选择"与"扩展名分派"。
-//   依赖方向: app → doc / framework / editor(写方向 LayoutWriter) / common; 不新增跨层反依赖。
+//   依赖方向: app → doc / framework / editor(写方向 LayoutWriter); 不新增跨层反依赖。
 // ================================
 
 #pragma once

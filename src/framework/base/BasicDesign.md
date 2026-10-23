@@ -6,7 +6,7 @@
 (`AutoSize`)、投影配色(`ProjCR`), 外加一个把打包色值展开为浮点分量的宏。
 
 本模块属 **framework 层的底座**:只产出数值与色值, 不做布局解析、不持窗口句柄、不绘制、不查控件。
-依赖方向单向向下:只依赖 `common/MemoryManager.h` 的分配器类型(且仅 `ProjCR` 的轴位置表使用),
+依赖方向单向向下:只依赖 `framework/base/mem/MemoryManager.h` 的分配器类型(且仅 `ProjCR` 的轴位置表使用),
 被控件层、部件层、几何解算与渲染出口消费。
 
 文件内的显示器枚举回调、比例与尺寸互算辅助、`ProjCR` 的分配器静态状态均为内部件, 不对外。
@@ -469,6 +469,6 @@ public:
 | 标头 | `framework/base/BasicDesign.h`(`src\framework\base\BasicDesign.h`) |
 | 实现 | `src\framework\base\BasicDesign.cpp`;模板与内联件在头文件内 |
 | 命名空间 | 全局作用域 |
-| 依赖 | `AutoSize` · `user32.dll` · `ScreenRef` · `common/MemoryManager.h` · `ucrt` · `minwindef.h` |
+| 依赖 | `AutoSize` · `user32.dll` · `ScreenRef` · `framework/base/mem/MemoryManager.h` · `ucrt` · `minwindef.h` |
 | 平台 | Windows 全版本 |
 | 线程安全 | 是(查询与纯换算无共享状态); `ProjCR` 实例的建立 / 改向 / 重建须由调用方串行 |

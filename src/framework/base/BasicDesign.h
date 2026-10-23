@@ -1,7 +1,7 @@
 #pragma once
 #include <minwindef.h>
 #include <windef.h>		// RECT(显示器工作区查询的入参/出参)
-#include "common/MemoryManager.h"
+#include "framework/base/mem/MemoryManager.h"
 
 #define MAKE_CR_IMVEC4(dw) { ((dw) & 0xFF) / 255.0f, (((dw) >> 8) & 0xFF) / 255.0f, (((dw) >> 16) & 0xFF) / 255.0f, ((dw) >> 24) / 255.0f }
 

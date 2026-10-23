@@ -290,7 +290,7 @@ VOID FreeLayoutCtrlBuffers(Layout& layout);
 ### 注解
 
 须在布局对象析构之前调用; 逐控件转调 `CtrlBuffer::FreeCtrlBuffer`。之所以归布局层而非 base: 整枚布局的遍历需要
-`Layout` 完整类型, 而 `framework/base/CtrlBuffer.h` 只依赖 base 与 common(以单枚控件为操作对象)。
+`Layout` 完整类型, 而 `framework/base/CtrlBuffer.h` 只依赖 base(含 mem;以单枚控件为操作对象)。
 
 ---
 
@@ -301,6 +301,6 @@ VOID FreeLayoutCtrlBuffers(Layout& layout);
 | 标头 | `framework/layout/LayoutBuilder.h`(`src\framework\layout\LayoutBuilder.h`) |
 | 实现 | `src\framework\layout\LayoutBuilder.cpp` |
 | 命名空间 | `LayoutBuilder` |
-| 依赖 | `framework/layout/Layout.h` · `framework/layout/LayoutModel.h` · `framework/base/CtrlBuffer.h` · `framework/base/BasicDesign.h` · `framework/dispatch/UIEventHandler.h` · `common/AllocatorHub.h` · `windows.h` · `ucrt` |
+| 依赖 | `framework/layout/Layout.h` · `framework/layout/LayoutModel.h` · `framework/base/CtrlBuffer.h` · `framework/base/BasicDesign.h` · `framework/dispatch/UIEventHandler.h` · `framework/base/mem/AllocatorHub.h` · `windows.h` · `ucrt` |
 | 平台 | Windows 全版本 |
 | 线程安全 | 否(经 `Layout` 的静态分配器分配); 须由调用方串行 |

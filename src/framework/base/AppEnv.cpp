@@ -1,6 +1,6 @@
 // ================================
 // 文件: AppEnv.cpp
-// 描述: 应用环境件实现 —— 控制台 UTF-8 环境 / 系统亮暗模式 / 窗口圆角(见 AppEnv.h 的接口说明)
+// 描述: 应用环境件实现(接口契约见同目录 AppEnv.md)
 // ================================
 
 // ================================
@@ -10,14 +10,14 @@
 #include <dwmapi.h>		// DWM 圆角属性(DWMWA_WINDOW_CORNER_PREFERENCE / DWMWCP_ROUND)
 #include <stdio.h>
 
-#include "common/AppEnv.h"
+#include "framework/base/AppEnv.h"
 
 // ================================
 // 区域: 接口实现区
 // ================================
 
 // 函数: InitConsoleUtf8
-// 描述: 初始化 UTF-8 控制台环境(输入输出代码页均设为 UTF-8)
+// 描述: 把控制台输入与输出代码页都设为 UTF-8
 VOID AppEnv::InitConsoleUtf8()
 {
 	SetConsoleOutputCP(CP_UTF8);
@@ -25,8 +25,7 @@ VOID AppEnv::InitConsoleUtf8()
 }
 
 // 函数: IsSystemDarkMode
-// 描述: 读取系统深色模式设置(注册表 AppsUseLightTheme; 0 = 深色)
-// 说明: 键打不开或值不可用 ⇒ 按浅色处理(返回 FALSE)
+// 描述: 查询系统应用主题是否为深色
 bool AppEnv::IsSystemDarkMode()
 {
 	HKEY hKey;
@@ -44,8 +43,7 @@ bool AppEnv::IsSystemDarkMode()
 }
 
 // 函数: ApplyWindowCornerRounding
-// 描述: 设置窗口圆角 —— 优先 DWM 属性, 不可用时回退"按圆角矩形区域裁剪窗口"
-// 参数 / 返回: 见 AppEnv.h 的同名声明
+// 描述: 为窗口应用圆角(优先 DWM 属性, 失败回退圆角区域裁剪)
 VOID AppEnv::ApplyWindowCornerRounding(HWND hWnd, DWORD w, DWORD h, DWORD space, BOOL* pbByRgn)
 {
 	if (hWnd == NULL || w < 1 || h < 1)
@@ -64,7 +62,7 @@ VOID AppEnv::ApplyWindowCornerRounding(HWND hWnd, DWORD w, DWORD h, DWORD space,
 			return;
 		}
 	}
-	// ② 回退: 以圆角矩形区域裁剪窗口(第三参 TRUE = 区域对象交系统接管, 不再需要 DeleteObject)
+	// ② 回退: 以圆角矩形区域裁剪窗口
 	{
 		HRGN hRgn = CreateRoundRectRgn(0, 0, (int)w, (int)h, (int)space, (int)space);
 		if (hRgn == NULL)
