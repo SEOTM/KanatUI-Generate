@@ -86,4 +86,3 @@
 - 编辑器: `src\editor\GenEditor.h`（外壳交互；承载者注入入口 `SetDocument`）
 - 会话面回调类型: `src\framework\base\FuncPtr.h`（`pfnEnsurePreviewBase` / `pfnSyncPreviewLayout` / `pfnBumpDocRev` / `pfnAddDocLayout`）
 - 接线（宿主）: `src\app\AppHost.cpp`（承载者 + 会话回调 + 命令面回调同点注入 / 复位）
-- 方案依据: `_tmp\ap5-survey.md`

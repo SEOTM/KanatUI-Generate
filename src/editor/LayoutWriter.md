@@ -23,7 +23,7 @@
 段大小公式 `BinSegBytes(N)` / 上限 `LAYOUT_MAX=1024`、`CTRL_MAX=8192`（JSON 与 bin 共用）。
 **记录区 = 中间态结构体的内存镜像**（头部区 = 一枚 `LayoutInfo`，其末 4 B 即"控件数量"；每控件 = 一枚 `ElementSpec`，
 其中 `parentID` 字段偏移 `532`、记录总长 `536` B），读写两侧**整块 `memcpy`**，不做逐字段解析/编码 ⇒ 字节序随编译目标，文件不另作声明。
-**校验码算法归 `FileCodec`**（本模块只按契约调用 `FileCodec::Crc32`）。字节级说明见 `docs\archive\recon-bin-format\`。
+**校验码算法归 `FileCodec`**（本模块只按契约调用 `FileCodec::Crc32`）。格式与校验规则的公开说明见 `docs/LAYOUT-FORMAT.md` 第 9 节。
 
 **数据真源 = 中间态**：布局链（`LayoutModel::LayoutFirst/LayoutNext`）与元素链（`ElementFirst/ElementNext`）即文件顺序；
 `LayoutInfo`/`ElementSpec` 与文件字段一一对应 ⇒ 不需要任何旁挂表（`type`/`text`/`event` 的原串保存在元素规格里）。
@@ -91,8 +91,7 @@ GUI 入口（`GenUIEditor::OnSave`）在此之上把该情形转为"另存为"�
   **读方向**（`LayoutSolver::LoadLayoutsBin` / `IsBinDocument` / 形态分派 `LoadLayoutsAuto`）**不依赖本模块** ——
   两侧共用 `LayoutModel` 的格式契约与 `FileCodec` 的校验算法。
   **接入面**：`Application::SaveDocument` 按目标扩展名分派（`.bin` ⇒ `SaveBinToFile`，其余 ⇒ `SaveToFile`）；
-  加载链第 3 级内嵌 bin 资源（`IDR_GENUI_BIN`）由构建期工装 `tools\json2bin.py` 从工程源生成（字段偏移与本模块格式同源；
-  引导产物由**改文档后重新构建**保证）。
-  设计与实测见 `docs\archive\recon-bin-format\`（编解码核心）、`docs\archive\recon-bin-io-20261002\`（打开/保存接入 + 加载链第 1/3 级）
-  与 `docs\archive\recon-fmtcontract-20261002\`（格式契约落位 + 读写解耦）。
+  加载链第 3 级内嵌 bin 资源（`IDR_GENUI_BIN`）为可选：构建期可由工程源生成同源 bin（字段偏移与本模块格式一致）；
+  未内嵌时由第 1 / 2 级外部文件提供文档。
+  格式与校验规则的公开说明见 `docs/LAYOUT-FORMAT.md` 第 9 节。
   **bin 编解码不另立文件**：读方向落 `LayoutSolver`（与 JSON 读同文件），写方向落本模块；格式契约落 `LayoutModel`，校验算法落 `FileCodec`。
