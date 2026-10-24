@@ -26,7 +26,7 @@ Layout* FlexHost::pShellBase = NULL;
 //       装配后默认非活动(按需显示, 见 BuildFlexMembersFromSolver)。
 static CONST LPCSTR aFlexMemberNames[] =
 {
-	GENUI_HINT_LAYOUT_NAME,		// 提示布局(初版唯一内嵌成员; 按需显示 —— 展示提示时置活动)
+	KANATUI_GENERATE_HINT_LAYOUT_NAME,		// 提示布局(初版唯一内嵌成员; 按需显示 —— 展示提示时置活动)
 };
 
 // 函数: SetShellBase

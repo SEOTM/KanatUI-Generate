@@ -6,7 +6,7 @@
 
 #pragma once
 
-// 内置文档资源: JSON 形态(resource.res\GenUI.json; 加载链第 4 级)
-#define IDR_GENUI_JSON		101
-// 内置文档资源: bin 形态(resource.res\GenUI.bin; 加载链第 3 级)
-#define IDR_GENUI_BIN		102
+// 内置文档资源: JSON 形态(resource.res\KanatUIGenerate.json; 加载链第 4 级)
+#define IDR_KANATUI_GENERATE_JSON		101
+// 内置文档资源: bin 形态(resource.res\KanatUIGenerate.bin; 加载链第 3 级)
+#define IDR_KANATUI_GENERATE_BIN		102

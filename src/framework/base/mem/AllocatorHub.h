@@ -8,7 +8,7 @@
 
 // ================================
 // 命名空间: AllocatorHub
-// 描述: 会话分配器的持有与分配原语(进程级单例语义; 与 GenUIEditor / SelectionOverlay 同风格)
+// 描述: 会话分配器的持有与分配原语(进程级单例语义; 与 KanatUIGenerateEditor / SelectionOverlay 同风格)
 // ================================
 namespace AllocatorHub
 {

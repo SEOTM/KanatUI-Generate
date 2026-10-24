@@ -24,8 +24,8 @@ struct DocSource
 // ================================
 // 命名空间: DocumentSource
 // 描述: 启动加载链的四级顺序探测与内置资源取件(启动期一次; 无状态)
-// 说明: 顺序 = 第 1 级 .\GenUI.bin → 第 2 级 .\GenUI.json → 第 3 级 resource.res\GenUI.bin
-//       → 第 4 级 resource.res\GenUI.json; 命中即用(命中后不再探测后续级别)。
+// 说明: 顺序 = 第 1 级 .\KanatUIGenerate.bin → 第 2 级 .\KanatUIGenerate.json → 第 3 级 resource.res\KanatUIGenerate.bin
+//       → 第 4 级 resource.res\KanatUIGenerate.json; 命中即用(命中后不再探测后续级别)。
 //       第 1/2 级 = exe 目录下的外部文件; 第 3/4 级 = 随 exe 内置的资源(见 src\app\resource.h);
 //       第 1/3 级为 bin 形态、第 2/4 级为 JSON 形态, 实际解析按文件内容嗅探分派
 //       (见 LayoutSolver::IsBinDocument / LoadLayoutsAuto)⇒ 级序才是口径, 形态由内容决定。
@@ -42,7 +42,7 @@ namespace DocumentSource
 	// 说明: 唯一消费点 = 本模块的 ResolveDocumentSource 第 4 级(不对外)。
 	BOOL GetEmbeddedDoc(LPVOID* ppData, DWORD* pcbData);
 	// 函数: GetEmbeddedDocBin
-	// 描述: 取随 exe 内置的 bin 文档资源(加载链第 3 级 resource.res\GenUI.bin; 同样补 '\0' 以便统一持有)
+	// 描述: 取随 exe 内置的 bin 文档资源(加载链第 3 级 resource.res\KanatUIGenerate.bin; 同样补 '\0' 以便统一持有)
 	// 返回: TRUE 命中(ppData/pcbData 有效; pcbData 不含补的 '\0'); FALSE 未内嵌/不可用
 	// 说明: 唯一消费点 = 本模块的 ResolveDocumentSource 第 3 级(不对外)。
 	BOOL GetEmbeddedDocBin(LPVOID* ppData, DWORD* pcbData);

@@ -26,7 +26,7 @@ public:
 	// 说明: 两类匹配 ——
 	//   · 完整名: chDigitLo == '\0' ⇒ 按 strcmp 精确匹配 szEvent;
 	//   · 前缀家族: chDigitLo != '\0' ⇒ szEvent 为前缀, 其后恰一位数字且落在
-	//     [chDigitLo, chDigitHi]、再以 '\0' 结尾(例: "GENUI_EXP_R" + '0'..'5')。
+	//     [chDigitLo, chDigitHi]、再以 '\0' 结尾(例: "KANATUI_GENERATE_EXP_R" + '0'..'5')。
 	//   表按数组序线性匹配、命中即止(现表内各条互不重叠 ⇒ 顺序不影响结果)。
 	struct EventBinding
 	{

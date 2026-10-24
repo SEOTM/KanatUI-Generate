@@ -440,12 +440,12 @@ static BOOL IsEngineSourcePath(
 
 类型: **BOOL**
 
-`TRUE` = 指向 exe 目录下的 `GenUI.json` 或 `GenUI.bin`。
+`TRUE` = 指向 exe 目录下的 `KanatUIGenerate.json` 或 `KanatUIGenerate.bin`。
 
 ### 注解
 
-判据: 把两侧各经全路径规范化后按大小写不敏感比较 —— 相对路径与大小写均归一(“exe 目录下的 `GenUI.json` /
-`GenUI.bin`”是唯一语义)。这两个名字正是启动加载链的 exe 目录级来源, 因此同属“工程源只读输入”候选。
+判据: 把两侧各经全路径规范化后按大小写不敏感比较 —— 相对路径与大小写均归一(“exe 目录下的 `KanatUIGenerate.json` /
+`KanatUIGenerate.bin`”是唯一语义)。这两个名字正是启动加载链的 exe 目录级来源, 因此同属“工程源只读输入”候选。
 
 不做存在性检查: 路径可以指向尚不存在的文件, 判据只看身份。
 

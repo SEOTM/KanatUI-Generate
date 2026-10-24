@@ -6,7 +6,7 @@
 //   - 第一面「预览基座与帧间同步」: 基座对象(链式布局; 全部文档条目共享同一对象, 内容随 active
 //     条目变换) · 中间态当前条目 → 基座的按编辑情况更新 · 帧间事件队列上的同步请求 ·
 //     条目 autosize 变更后的窗口几何与参考尺寸重算。
-//   - 第二面「外壳快照」(pShell / bShellValid / LoadShellSnapshot 一族): 编辑窗口 GenUIEditor
+//   - 第二面「外壳快照」(pShell / bShellValid / LoadShellSnapshot 一族): 编辑窗口 KanatUIGenerateEditor
 //     独立只读快照条目的解析 / 装载 / 失效复位 · 快照查询(布局 / 参考尺寸 / 经验参数 / 窗口矩形)·
 //     建窗后的客户区几何校正。两面同属"会话面只读 / 装配件": 生命周期都随应用会话, 都与被编辑文档的
 //     切换 / 新建无关; ⇒ 同落点。
@@ -46,7 +46,7 @@ private:
 	static Arena* pArena;				// 会话分配器句柄(仅"是否就绪"判据; NULL = 未注入) | 8 字节
 	// 外壳快照状态(自 Application::AppData 迁出; 由应用侧注入的分配器句柄决定其就绪面)
 	static LayoutEntry* pShell;			// 外壳布局快照条目(编辑窗口驱动, 见本文件"外壳快照访问"区) | 8 字节
-	static BOOL bShellValid;			// 外壳快照是否有效(载入含 GenUIEditor)	| 4 字节
+	static BOOL bShellValid;			// 外壳快照是否有效(载入含 KanatUIGenerateEditor)	| 4 字节
 
 	// 私有化构造/析构
 	PreviewSession() = delete;
@@ -59,7 +59,7 @@ private:
 	// 描述: 释放外壳快照条目(布局对象销毁; 条目内存由内存池持有)
 	static VOID FreeShellSnapshot();
 	// 函数: BuildShellSnapshotFromSolver
-	// 描述: 由已解析的布局规格构建外壳快照(取 name==GenUIEditor 的布局)
+	// 描述: 由已解析的布局规格构建外壳快照(取 name==KanatUIGenerateEditor 的布局)
 	static BOOL BuildShellSnapshotFromSolver(LayoutSolver* solver);
 
 public:
@@ -121,12 +121,12 @@ public:
 	//		IN	index:	文档条目索引
 	static VOID RecalcEntryGeometry(DWORD index);
 
-	// -------- 外壳快照访问(编辑窗口 = GenUIEditor 布局渲染源) --------
-	// 说明: 外壳快照 = 启动载入 GenUI.json 中 name==GenUIEditor 布局的独立副本(会话内固定,
+	// -------- 外壳快照访问(编辑窗口 = KanatUIGenerateEditor 布局渲染源) --------
+	// 说明: 外壳快照 = 启动载入 KanatUIGenerate.json 中 name==KanatUIGenerateEditor 布局的独立副本(会话内固定,
 	//       不随编辑文档切换/打开变化); 渲染 hWndEdit 内容用。文件无该布局时快照无效 ⇒
 	//       编辑窗口无可渲染内容(调用方诊断后中止启动)。
 	// 函数: LoadShellSnapshot
-	// 描述: 从布局文件解析 name==GenUIEditor 布局为外壳快照(替换既有快照; 非致命)
+	// 描述: 从布局文件解析 name==KanatUIGenerateEditor 布局为外壳快照(替换既有快照; 非致命)
 	// 说明: 快照窗口像素(hWndEdit 的建窗尺寸来源)由该布局 autosize 推导 —— 与文档条目/预览窗口
 	//       同法(布局 = 一个窗口), 载入即 BuildEntryRef + ApplyEntryGeometry 求解完毕
 	static BOOL LoadShellSnapshot(LPCSTR path);
@@ -134,7 +134,7 @@ public:
 	// 描述: 与 LoadShellSnapshot 同语义, 但数据来自内存缓冲(启动加载链命中内置资源时走此入口)
 	static BOOL LoadShellSnapshotFromMemory(LPVOID pData, DWORD cbData);
 	// 函数: GetShellValid
-	// 描述: 外壳快照是否有效(GenUI.json 载入且含 GenUIEditor 布局)
+	// 描述: 外壳快照是否有效(KanatUIGenerate.json 载入且含 KanatUIGenerateEditor 布局)
 	static BOOL GetShellValid();
 	// 函数: GetShellLayout / GetShellRef / GetShellRefSize
 	// 描述: 外壳布局/参考尺寸/经验参数访问(无效时返回空对象/默认值)

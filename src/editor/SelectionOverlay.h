@@ -9,7 +9,7 @@
 
 // ================================
 // 命名空间: SelectionOverlay
-// 描述: 选中态视图叠加件(函数均为进程级单例语义, 与 GenUIEditor 同风格)
+// 描述: 选中态视图叠加件(函数均为进程级单例语义, 与 KanatUIGenerateEditor 同风格)
 // ================================
 namespace SelectionOverlay
 {

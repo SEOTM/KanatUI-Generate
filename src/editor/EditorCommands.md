@@ -1,7 +1,7 @@
 # EditorCommands —— 接口文档
 
 > 模块：`src\editor\EditorCommands.{h,cpp}`（全静态类；构造/析构私有化 ⇒ 进程级单例语义）
-> 层归属：**editor 层**（编辑器命令层）—— 与同层的 `GenUIEditor`（外壳交互）、`SelectionOverlay`（选中态叠加件）、
+> 层归属：**editor 层**（编辑器命令层）—— 与同层的 `KanatUIGenerateEditor`（外壳交互）、`SelectionOverlay`（选中态叠加件）、
 > `LayoutWriter`（写方向序列化）相邻但职责不同：本模块只承载**文档编辑命令**。
 > 定位：**编辑命令的落点** —— 把"改中间态元素链 / 条目数据"的命令自应用主类搬到编辑层，使命令不依赖 `app` 层。
 
@@ -11,7 +11,7 @@
 
 ### 1.1 根本职责（当前口径）
 
-1. **承载者接入**: 持宿主注入的 `doc\Document*`（`SetDocument`；注入链路 = 宿主 → `GenUIEditor::SetDocument` → 本模块转发）。
+1. **承载者接入**: 持宿主注入的 `doc\Document*`（`SetDocument`；注入链路 = 宿主 → `KanatUIGenerateEditor::SetDocument` → 本模块转发）。
 2. **元素规格族命令**: 取值（`SpecAt`）· 插入（`InsertSpecAt`）· 移除（`RemoveSpecAt`）——
    判据本体归 `doc\Document`（`SpecAt` / `InsertSpecAt` / `RemoveSpecAt`），本模块负责**布局→文档索引的反查**与降级口径。
 3. **布局族命令**: 改名（`SetDocLayoutName`）· 追加（`AddDocLayout`）·
@@ -23,8 +23,8 @@
 
 - **不持会话面状态**: 预览唯一基座 / 外壳快照 / 内嵌成员 / 文档版本号归应用侧；
   需要时经**注入回调**（`SessionHooks`）驱动，不把会话状态搬进本模块。
-- **不做渲染 / 交互**: 归 `framework\render\Render.h` + `editor\GenUIEditor`。
-- **不做外壳布局**: 归 `GenUIEditor`。
+- **不做渲染 / 交互**: 归 `framework\render\Render.h` + `editor\KanatUIGenerateEditor`。
+- **不做外壳布局**: 归 `KanatUIGenerateEditor`。
 - **不做控件缓冲的构造 / 回收**: 归 `framework\base\CtrlBuffer.h` 与 `framework\layout\LayoutBuilder.h`。
 - **依赖方向**: `editor → doc / framework`；不引 `app/` 头。
 
@@ -54,7 +54,7 @@
 
 ### 3.2 注入时序
 
-- 承载者由宿主在 `Application::Init()` **成功之后**单点注入，经 `GenUIEditor::SetDocument` 转发到本模块。
+- 承载者由宿主在 `Application::Init()` **成功之后**单点注入，经 `KanatUIGenerateEditor::SetDocument` 转发到本模块。
   该时序与既有三处注入（事件绑定表 / 点击处理器 / 窗口句柄）**相反** —— 理由见 `src\app\AppHost.md` §3.1。
 - 复位 = `SetDocument(NULL)`，须**早于** `Application::Release()`。
 

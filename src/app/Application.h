@@ -1,9 +1,9 @@
 // ================================
 // 文件: Application.h
-// 说明: 应用程序主类头文件 (GenUI 多布局版)
+// 说明: 应用程序主类头文件 (Kanat UI Generate 多布局版)
 //   文档模型:
 //       - 布局文件 = 1..N 个布局(每个布局携带独立 autosize 经验参数)
-//       - GenUI 自身界面布局(文件行/布局管理/经验参数/控件列表/控件编辑)由 GenUIEditor 布局渲染
+//       - Kanat UI Generate 自身界面布局(文件行/布局管理/经验参数/控件列表/控件编辑)由 KanatUIGenerateEditor 布局渲染
 //         ("外壳"即该布局)
 //       - 预览 = 单画布, 随"布局管理"选中布局(active)切换
 //       - 载入 = 整个文档(全部布局 + 各自 autosize)
@@ -22,9 +22,9 @@
 // ================================
 // 常量: 外壳布局保留名
 // ================================
-constexpr LPCSTR GENUI_SHELL_LAYOUT_NAME = "GenUIEditor";	// 编辑窗口外壳布局在布局文档中的保留名
+constexpr LPCSTR KANATUI_GENERATE_SHELL_LAYOUT_NAME = "KanatUIGenerateEditor";	// 编辑窗口外壳布局在布局文档中的保留名
 
-// 内嵌(flex)窗口成员名(GENUI_HINT_LAYOUT_NAME)/ 提示正文缓冲容量(HINT_BODY_BUF)/ 条目结构
+// 内嵌(flex)窗口成员名(KANATUI_GENERATE_HINT_LAYOUT_NAME)/ 提示正文缓冲容量(HINT_BODY_BUF)/ 条目结构
 
 // ================================
 // 类名: Application
@@ -96,7 +96,7 @@ public:
 
 	// -------- 文档模型访问 --------
 	// 函数: GetDocument
-	// 描述: 取文档承载者地址(doc\Document; 供宿主在启动期经 GenUIEditor::SetDocument 注入编辑器)
+	// 描述: 取文档承载者地址(doc\Document; 供宿主在启动期经 KanatUIGenerateEditor::SetDocument 注入编辑器)
 	// 说明: 承载者按值内嵌在成员块 AppData 内 ⇒ 应用就绪后地址终生稳定(Release 只置 data = NULL,
 	//   不搬迁地址) ⇒ 可交出裸指针; NewDocument / LoadDocument 只重置其字段(条目数组 / 中间态),
 	//   不改变地址, 但跨结构变更持有的条目/元素指针必然失效(调用方不得缓存)。

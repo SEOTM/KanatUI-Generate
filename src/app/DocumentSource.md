@@ -3,7 +3,7 @@
 ## 概述
 
 `DocumentSource` 是应用启动加载链的落点: 按固定级序探测可用的文档源, 命中即用, 并以 `DocSource` 回传来源。
-四级顺序 = exe 目录外部文件 `.\GenUI.bin` → exe 目录外部文件 `.\GenUI.json` → 随 exe 内置的 bin 资源 →
+四级顺序 = exe 目录外部文件 `.\KanatUIGenerate.bin` → exe 目录外部文件 `.\KanatUIGenerate.json` → 随 exe 内置的 bin 资源 →
 随 exe 内置的 JSON 资源; 前两级返回池内路径, 后两级经 Win32 资源 API 取件、拷进会话内存池并补 `'\0'`。
 级序是口径、形态由内容决定: `bBin` 只是来源标注, 四条读入口一律由载入侧按内容嗅探分派解析。
 
@@ -67,9 +67,9 @@ BOOL ResolveDocumentSource(
 
 ### 注解
 
-级序即口径: 第 1 级 `.\GenUI.bin`(exe 目录外部文件, bin 形态, 掩码位 `0x1`)→ 第 2 级
-`.\GenUI.json`(exe 目录外部文件, JSON 形态, `0x2`)→ 第 3 级 `resource.res\GenUI.bin`(内置资源, bin,
-`0x4`)→ 第 4 级 `resource.res\GenUI.json`(内置资源, JSON, `0x8`)。命中即止, 不再探测后续级别。
+级序即口径: 第 1 级 `.\KanatUIGenerate.bin`(exe 目录外部文件, bin 形态, 掩码位 `0x1`)→ 第 2 级
+`.\KanatUIGenerate.json`(exe 目录外部文件, JSON 形态, `0x2`)→ 第 3 级 `resource.res\KanatUIGenerate.bin`(内置资源, bin,
+`0x4`)→ 第 4 级 `resource.res\KanatUIGenerate.json`(内置资源, JSON, `0x8`)。命中即止, 不再探测后续级别。
 
 第 1/2 级的命中判据是文件存在(属性查询不是 `INVALID_FILE_ATTRIBUTES`), 本函数不打开、不解析文件; 畸形文件
 在载入时被拒 ⇒ 由调用方关闭该级并回落后续级别, 不越级。第 3/4 级的命中判据是资源存在; 资源存在但取件或
@@ -83,7 +83,7 @@ BOOL ResolveDocumentSource(
 
 第 3/4 级返回的 `pData` 是会话内存池中的副本, 末尾已补 `'\0'`, `cbData` 不含该字节; 所有权归池, 调用方
 不得释放, 应直接交给内存载入入口(`app\DocumentIO` 的内存载入与 `app\PreviewSession` 的外壳快照内存入口都
-要求 NUL 结尾)。默认不向 exe 目录投放 `.\GenUI.bin` ⇒ 现行启动通常在第 1 级未命中、在第 2 级命中。
+要求 NUL 结尾)。默认不向 exe 目录投放 `.\KanatUIGenerate.bin` ⇒ 现行启动通常在第 1 级未命中、在第 2 级命中。
 
 每次实际尝试都会输出一行该级诊断(命中 / 未命中及原因), 级次回退的诊断责任在本函数, 不在调用方。级次全不
 可用时不构造任何内置文档替身(不内置代码回退), 让调用方的启动失败路径接管。
@@ -125,7 +125,7 @@ BOOL GetEmbeddedDoc(
 
 ### 注解
 
-资源 ID 与类型见 `src\app\resource.h` 的 `IDR_GENUI_JSON`(类型 `"JSON"`)。取件与池分配由
+资源 ID 与类型见 `src\app\resource.h` 的 `IDR_KANATUI_GENERATE_JSON`(类型 `"JSON"`)。取件与池分配由
 本文件的 `LoadEmbeddedResource` 完成, 本函数只固定资源 ID、类型与"补 `'\0'`"这三项口径。
 
 唯一消费点在本模块内的 `ResolveDocumentSource` 第 4 级 ⇒ 对外视为内部取件件, 不单独使用; 需要文档数据时
@@ -170,7 +170,7 @@ BOOL GetEmbeddedDocBin(
 
 ### 注解
 
-资源 ID 与类型见 `src\app\resource.h` 的 `IDR_GENUI_BIN`(类型 `"BIN"`)。除资源 ID、类型与形态标注外,
+资源 ID 与类型见 `src\app\resource.h` 的 `IDR_KANATUI_GENERATE_BIN`(类型 `"BIN"`)。除资源 ID、类型与形态标注外,
 语义与 `GetEmbeddedDoc` 完全一致: 会话池副本、末尾补 `'\0'`、所有权归池、唯一消费点在本模块内
 (`ResolveDocumentSource` 第 3 级)。
 
@@ -231,6 +231,6 @@ struct DocSource
 | 标头 | `app/DocumentSource.h`(`src\app\DocumentSource.h`) |
 | 实现 | `src\app\DocumentSource.cpp` |
 | 命名空间 | 命名空间 `DocumentSource`(三个函数) + 全局结构 `DocSource` |
-| 依赖 | 工程内: `framework\dispatch\ResourceLoader`(`GetFilePath`)、`framework\base\mem\AllocatorHub`(资源节副本)、`app\resource.h`(`IDR_GENUI_JSON` / `IDR_GENUI_BIN`); 系统: `kernel32`(文件属性查询与资源 API)、CRT(`printf`) |
+| 依赖 | 工程内: `framework\dispatch\ResourceLoader`(`GetFilePath`)、`framework\base\mem\AllocatorHub`(资源节副本)、`app\resource.h`(`IDR_KANATUI_GENERATE_JSON` / `IDR_KANATUI_GENERATE_BIN`); 系统: `kernel32`(文件属性查询与资源 API)、CRT(`printf`) |
 | 平台 | Windows; 第 3/4 级依赖随 exe 携带的资源节, 缺失时该两级按"未命中"处理 |
 | 线程安全 | 否(无内部同步; 结果写入调用方提供的结构, 取件内存来自共享会话池 ⇒ 跨线程调用需外部串行) |

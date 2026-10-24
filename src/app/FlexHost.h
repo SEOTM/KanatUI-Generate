@@ -29,7 +29,7 @@ class LayoutSolver;
 //   成员来源 = 外壳源文档(与外壳快照同源同生命周期, 不随被编辑文档变化);
 //   初版名单 = 「提示布局」 —— 按需显示(装配时非活动)
 // ================================
-constexpr LPCSTR GENUI_HINT_LAYOUT_NAME = u8"提示布局";	// 提示布局(内嵌成员; 初版唯一)
+constexpr LPCSTR KANATUI_GENERATE_HINT_LAYOUT_NAME = u8"提示布局";	// 提示布局(内嵌成员; 初版唯一)
 
 // ================================
 // 常量: 提示正文缓冲容量

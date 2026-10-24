@@ -77,7 +77,7 @@ public:
 	// 说明: 出口格式按目标扩展名分派 —— .bin(大小写不敏感)⇒ bin 字节流, 其余 ⇒ 规范 JSON 文本
 	static BOOL SaveDocument(LPCSTR path);
 	// 函数: IsEngineSourcePath
-	// 描述: 判断给定路径是否指向"工程源文档"(exe 目录 GenUI.json / GenUI.bin; 相对路径/大小写不敏感)
+	// 描述: 判断给定路径是否指向"工程源文档"(exe 目录 KanatUIGenerate.json / KanatUIGenerate.bin; 相对路径/大小写不敏感)
 	static BOOL IsEngineSourcePath(LPCSTR path);
 	// 函数: IsProtectedSavePath
 	// 描述: 保存目标是否受保护 —— 目标是工程源文档, 且当前文档关联文件也是它

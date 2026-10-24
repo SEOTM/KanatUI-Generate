@@ -20,7 +20,7 @@
 
 | 字段 | 类型 | 必需 | 说明 |
 | :--- | :--- | :--- | :--- |
-| `name` | 字符串（≤ 63 字节） | 否 | 布局名。保留名 `GenUIEditor` 表示编辑窗口外壳，启动时按它取外壳快照 |
+| `name` | 字符串（≤ 63 字节） | 否 | 布局名。保留名 `KanatUIGenerateEditor` 表示编辑窗口外壳，启动时按它取外壳快照 |
 | `label` | 字符串（≤ 127 字节） | 否 | 布局显示标签，为空时界面回落 `name` |
 | `IsMaxiable` | 布尔 | 否 | 窗口是否可最大化，缺省 `false` |
 | `IsResizeable` | 布尔 | 否 | 窗口是否可调整大小，缺省 `false` |
@@ -271,7 +271,7 @@ bin 是定长记录格式：文件头 + 若干布局段；每个布局段是段�
 
 ## 11. 最小示例
 
-下面是文档结构的最小示范（一份布局、三枚结构件）。它本身不能单独启动设计器——启动要求文档内含保留名 `GenUIEditor` 的外壳布局；完整示例见 [examples/GenUI.json](examples/GenUI.json)。
+下面是文档结构的最小示范（一份布局、三枚结构件）。它本身不能单独启动设计器——启动要求文档内含保留名 `KanatUIGenerateEditor` 的外壳布局；完整示例见 [examples/KanatUIGenerate.json](examples/KanatUIGenerate.json)。
 
 ```json
 {

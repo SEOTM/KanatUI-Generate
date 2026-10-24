@@ -6,7 +6,7 @@
 
 1. 预览基座与帧间同步: 全部文档条目共享的同一个链式布局对象(基座), 其内容按中间态当前 active 条目装配;
    编辑动作改完中间态后经统一入口请求同步 —— 渲染帧内挂帧间队列、帧末排空执行, 排空执行中当场同步。
-2. 外壳快照: 启动载入的布局文件里保留名 `GENUI_SHELL_LAYOUT_NAME` 那一份布局的独立只读副本, 供编辑窗口
+2. 外壳快照: 启动载入的布局文件里保留名 `KANATUI_GENERATE_SHELL_LAYOUT_NAME` 那一份布局的独立只读副本, 供编辑窗口
    渲染; 含装载、查询、建窗几何校正与失效复位。
 
 两面同属"会话面只读 / 装配件": 生命周期都随应用会话(都在应用侧"分配成员存储"一步建立、释放点同点回收),
@@ -21,7 +21,7 @@
 
 内部件不立条: 私有静态件 `IsReady`(就绪判据) / `FreeShellSnapshot`(快照释放) /
 `BuildShellSnapshotFromSolver`(快照构建)的语义并入相关公开函数的注解; 保留名
-`GENUI_SHELL_LAYOUT_NAME` 定义在 `app\Application.h`, 本模块不重复定义。
+`KANATUI_GENERATE_SHELL_LAYOUT_NAME` 定义在 `app\Application.h`, 本模块不重复定义。
 
 本模块包含以下编程接口:
 
@@ -944,7 +944,7 @@ public:
 外壳族两枚(快照条目 / 有效位), 静态初始化即"未载入"档(空指针与 `FALSE`)。
 
 生命周期: 两族都随应用会话建立与复位, 都与被编辑文档的切换或新建无关 —— 外壳快照来源恒为启动载入的那一份
-(保留名 `GENUI_SHELL_LAYOUT_NAME` 定义在 `app\Application.h`), 预览基座内容则随 active 条目变化。两族共用
+(保留名 `KANATUI_GENERATE_SHELL_LAYOUT_NAME` 定义在 `app\Application.h`), 预览基座内容则随 active 条目变化。两族共用
 同一族装配件(条目几何族在 `app\Application` 的公开接口, 旁挂表在 `doc\RawAttributes`)与同一份注入句柄。
 
 调用顺序: `SetSession` 之后分两条独立链 —— 预览链(建立 → 同步 / 重算 → 释放)与外壳链(装载 → 查询 →

@@ -47,7 +47,7 @@
 
 | 常量 | 值 | 说明 |
 | --- | --- | --- |
-| `GENUI_HINT_LAYOUT_NAME` | `u8"提示布局"` | 名单内的初版唯一成员名, 也是成员缺席时的回落名。 |
+| `KANATUI_GENERATE_HINT_LAYOUT_NAME` | `u8"提示布局"` | 名单内的初版唯一成员名, 也是成员缺席时的回落名。 |
 | `HINT_BODY_BUF` | `512` | 提示正文控件缓冲容量(替代通用文本容量的专用口径)。 |
 
 ---
@@ -464,14 +464,14 @@ public:
 
 ---
 
-## GENUI_HINT_LAYOUT_NAME 常量 (FlexHost)
+## KANATUI_GENERATE_HINT_LAYOUT_NAME 常量 (FlexHost)
 
 内嵌成员名单里的初版唯一成员名。
 
 ### 语法
 
 ```cpp
-constexpr LPCSTR GENUI_HINT_LAYOUT_NAME = u8"提示布局";
+constexpr LPCSTR KANATUI_GENERATE_HINT_LAYOUT_NAME = u8"提示布局";
 ```
 
 ### 值

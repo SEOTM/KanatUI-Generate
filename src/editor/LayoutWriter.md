@@ -42,7 +42,7 @@
 | 数字 | 整值（含 `FLOAT` 整数值，绝对值 < 1e8）写整数形式；其余取**最短往返十进制**（`std::to_chars` 的 FLOAT 重载）；`-0.0f` 归一为 `0` |
 | 字符串 | 转义 `"`、`\`、`\n`/`\r`/`\t` 与 `< 0x20` 控制符；UTF-8 多字节（中文）按字节原样 |
 
-**不变式**：对由本写出器产出的文件（或与工程源 `GenUI.json` 同款排版的文件），`载入 → BuildJsonText` 输出与源文件**逐字节相同**。
+**不变式**：对由本写出器产出的文件（或与工程源 `KanatUIGenerate.json` 同款排版的文件），`载入 → BuildJsonText` 输出与源文件**逐字节相同**。
 
 ## 3. 写盘行为（`SaveRawToFile`；`SaveToFile` 生成规范 JSON 文本后转调它）
 
@@ -68,9 +68,9 @@ if (LayoutWriter::BuildJsonText(Application::GetDocState(), &lpText, &cbText))
 }
 ```
 
-**工程源保护（按加载路径）**：`Application::SaveDocument` 在 **当前文档来自 `.\GenUI.json` 加载路径**（`Application::GetDocPath()` == exe 目录 `GenUI.json`）
+**工程源保护（按加载路径）**：`Application::SaveDocument` 在 **当前文档来自 `.\KanatUIGenerate.json` 加载路径**（`Application::GetDocPath()` == exe 目录 `KanatUIGenerate.json`）
 且保存目标就是该文件时**拒绝写盘**并打印 `[APP] 保存被拒: …`（判据 = `Application::IsProtectedSavePath`，`IsEngineSourcePath` 只判路径本身）；
-GUI 入口（`GenUIEditor::OnSave`）在此之上把该情形转为"另存为"对话框。文档来源为其它文件 / 内置资源 / 新建时**不保护**（目标为该文件也允许写盘）。
+GUI 入口（`KanatUIGenerateEditor::OnSave`）在此之上把该情形转为"另存为"对话框。文档来源为其它文件 / 内置资源 / 新建时**不保护**（目标为该文件也允许写盘）。
 
 ## 5. 边界与失败语义
 
@@ -91,7 +91,7 @@ GUI 入口（`GenUIEditor::OnSave`）在此之上把该情形转为"另存为"�
   **读方向**（`LayoutSolver::LoadLayoutsBin` / `IsBinDocument` / 形态分派 `LoadLayoutsAuto`）**不依赖本模块** ——
   两侧共用 `LayoutModel` 的格式契约与 `FileCodec` 的校验算法。
   **接入面**：`Application::SaveDocument` 按目标扩展名分派（`.bin` ⇒ `SaveBinToFile`，其余 ⇒ `SaveToFile`）；
-  加载链第 3 级内嵌 bin 资源（`IDR_GENUI_BIN`）为可选：构建期可由工程源生成同源 bin（字段偏移与本模块格式一致）；
+  加载链第 3 级内嵌 bin 资源（`IDR_KANATUI_GENERATE_BIN`）为可选：构建期可由工程源生成同源 bin（字段偏移与本模块格式一致）；
   未内嵌时由第 1 / 2 级外部文件提供文档。
   格式与校验规则的公开说明见 `docs/LAYOUT-FORMAT.md` 第 9 节。
   **bin 编解码不另立文件**：读方向落 `LayoutSolver`（与 JSON 读同文件），写方向落本模块；格式契约落 `LayoutModel`，校验算法落 `FileCodec`。

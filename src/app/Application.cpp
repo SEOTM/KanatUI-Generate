@@ -469,7 +469,7 @@ BOOL Application::Init()
 			goto ERR_POOL;
 		}
 		printf("[APP] 加载链: 命中来源 = %s\n", src.lpDesc ? src.lpDesc : "?");
-		// 4. 外壳快照: 与文档同一命中级别, 解析 name==GenUIEditor 布局为独立副本,
+		// 4. 外壳快照: 与文档同一命中级别, 解析 name==KanatUIGenerateEditor 布局为独立副本,
 		//    驱动编辑窗口内容(会话内固定, 不随打开其他文档变化); 文件缺失/无该名/失败 → 快照无效。
 		//    本步非致命, 失败不阻断 Init。
 		if (bHit)

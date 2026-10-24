@@ -1,6 +1,6 @@
 // ================================================
-// 文件: GenEditor.cpp (GenUI 多布局版编辑器逻辑)
-// 描述: GenUI 自身界面布局(文件行/布局管理/经验参数/控件列表/控件编辑),
+// 文件: GenEditor.cpp (Kanat UI Generate 多布局版编辑器逻辑)
+// 描述: Kanat UI Generate 自身界面布局(文件行/布局管理/经验参数/控件列表/控件编辑),
 //   由布局文件声明 + 控件渲染装配(LayoutRender::RenderBase)渲染。
 // ================================================
 
@@ -184,7 +184,7 @@ static ExpCellOwner aExpOwner[6];		// EXP 六数值格权威值来源(来源布�
 //   结论只落内存状态与一条 [HINT] 诊断: 不移动任何 HWND、不改文档、不写盘,
 //   也尚未驱动任何提示流程。
 // ================================
-static INT nHintResult = GenUIEditor::HINT_RESULT_NONE;	// 最近一次交互结论(HintResult; 未交互 = 无)
+static INT nHintResult = KanatUIGenerateEditor::HINT_RESULT_NONE;	// 最近一次交互结论(HintResult; 未交互 = 无)
 static BOOL bHintDragging = FALSE;				// 提示标题栏拖动中(按住首帧建立偏移, 未按住清零)
 static POINT ptHintDragOfs{};					// 拖动偏移 = 光标 - 该内嵌窗口左上角(宿主客户区坐标)
 
@@ -662,7 +662,7 @@ VOID SyncEditsToSel()
 // 描述: 外壳布局锚点控件表(label → 期望类型); 启动期校验用
 static const struct ShellAnchorSpec
 {
-	LPCSTR szLbl;		// 锚点 label(与 GenUI.json 中逐字一致)
+	LPCSTR szLbl;		// 锚点 label(与 KanatUIGenerate.json 中逐字一致)
 	CtrlType type;		// 期望控件类型(决定缓冲布局与镜像桥解释方式)
 } aShellAnchor[] = {
 	{ "##MODE_SEL", CTRL_TYPE_COMBO },			// 模式下拉
@@ -754,14 +754,14 @@ static BOOL ValidateShellAnchors(BOOL bVerboseOK)
 //   NULL = 未注入 ⇒ 编辑器侧消费者须按"未注入 ⇒ 显式降级"处置, 不得解引用
 // 参数:
 //		IN	pDocument:	承载者地址(宿主侧对 data 内的承载者取址; NULL = 复位)
-VOID GenUIEditor::SetDocument(Document* pDocument)
+VOID KanatUIGenerateEditor::SetDocument(Document* pDocument)
 {
 	pDoc = pDocument;
 	EditorCommands::SetDocument(pDocument);		// 命令层同一承载者
 }
 // 函数: Init
 // 描述: 初始化编辑器(启动期校验外壳锚点)
-VOID GenUIEditor::Init()
+VOID KanatUIGenerateEditor::Init()
 {
 	if (bInited)
 	{
@@ -773,7 +773,7 @@ VOID GenUIEditor::Init()
 }
 // 函数: Update
 // 描述: 渲染前调用: 处理画布点选 + 选中有效性校验
-VOID GenUIEditor::Update()
+VOID KanatUIGenerateEditor::Update()
 {
 	pMain = ActiveLayoutCore();
 	if (!bInited)
@@ -789,7 +789,7 @@ VOID GenUIEditor::Update()
 			nPreviewClickIndex, fPreviewClickX, fPreviewClickY, fPreviewClickW, fPreviewClickH);
 		fflush(stdout);
 	}
-	// 外壳由 GenUIEditor 布局 JSON 声明式渲染 ⇒ 文件行路径动作控件(输入动作 ##FILE_PATH)
+	// 外壳由 KanatUIGenerateEditor 布局 JSON 声明式渲染 ⇒ 文件行路径动作控件(输入动作 ##FILE_PATH)
 	// 与当前文档路径两向同步(用户可编辑: 输入段提交即写回文档路径; 路径动作钮/打开/创建改路径即回填控件);
 	// 同路径追加 EXP 镜像同步(active 配置 -> 外壳释放的模式/单位/六数值格缓冲, 带编辑中保护)
 	if (PreviewSession::GetShellValid())
@@ -827,13 +827,13 @@ VOID GenUIEditor::Update()
 // 描述: 取「提示布局」最近一次交互结论
 // 返回:
 //		INT: 结论(HintResult; 未交互 = HINT_RESULT_NONE)
-INT GenUIEditor::GetHintResult()
+INT KanatUIGenerateEditor::GetHintResult()
 {
 	return nHintResult;
 }
 // 函数: ResetHintResult
 // 描述: 清除「提示布局」交互结论(接入提示流程时在弹出提示之前调用)
-VOID GenUIEditor::ResetHintResult()
+VOID KanatUIGenerateEditor::ResetHintResult()
 {
 	nHintResult = HINT_RESULT_NONE;
 	bHintDragging = FALSE;
@@ -845,47 +845,47 @@ VOID GenUIEditor::ResetHintResult()
 static CONST UIEventHandler::EventBinding aEventBindings[] =
 {
 	// ---- 标题栏事件: 编辑窗口 = 移动 + 关闭 / 预览窗口 = 只移动 ----
-	{ "TITLEBAR_EVENT",			GenUIEditor::OnTitleBarEvent,		'\0', '\0' },
-	{ "PREVIEW_TITLEBAR_EVENT",	GenUIEditor::OnPreviewTitleBarEvent,	'\0', '\0' },
+	{ "TITLEBAR_EVENT",			KanatUIGenerateEditor::OnTitleBarEvent,		'\0', '\0' },
+	{ "PREVIEW_TITLEBAR_EVENT",	KanatUIGenerateEditor::OnPreviewTitleBarEvent,	'\0', '\0' },
 	// ---- 文件行: 浏览 / 创建 / 打开 / 保存(四项均为帧间事件; 处理器内部自行挂帧间队列) ----
 	// 注: "创建"只新建中间态对象, 不生成真实文件; "保存" = 整文档写盘(工程源文档路径被拒)。
-	{ "GENUI_BROWSE",			GenUIEditor::OnBrowse,				'\0', '\0' },
-	{ "GENUI_CREATE",			GenUIEditor::OnCreate,				'\0', '\0' },
-	{ "GENUI_OPEN",				GenUIEditor::OnOpen,				'\0', '\0' },
-	{ "GENUI_SAVE",				GenUIEditor::OnSave,				'\0', '\0' },
+	{ "KANATUI_GENERATE_BROWSE",			KanatUIGenerateEditor::OnBrowse,				'\0', '\0' },
+	{ "KANATUI_GENERATE_CREATE",			KanatUIGenerateEditor::OnCreate,				'\0', '\0' },
+	{ "KANATUI_GENERATE_OPEN",				KanatUIGenerateEditor::OnOpen,				'\0', '\0' },
+	{ "KANATUI_GENERATE_SAVE",				KanatUIGenerateEditor::OnSave,				'\0', '\0' },
 	// 路径动作控件(INPUT_ACTION; 文件行"路径框 + 按钮"二合一): 按钮段 = 浏览 / 输入段提交 = 写回路径
-	{ "GENUI_FILEPATH",			GenUIEditor::OnInputActionEvent,	'\0', '\0' },
+	{ "KANATUI_GENERATE_FILEPATH",			KanatUIGenerateEditor::OnInputActionEvent,	'\0', '\0' },
 	// ---- 经验参数区(EXP): 模式下拉 / 单位下拉 / 六数值格 ----
 	// 注: 三者共用同一处理器(格身份由触发控件的 label 决定); 六数值格 = 前缀家族 R0..R5。
-	{ "GENUI_EXP_MODE",			GenUIEditor::OnExpSubmit,			'\0', '\0' },
-	{ "GENUI_EXP_UNIT",			GenUIEditor::OnExpSubmit,			'\0', '\0' },
-	{ "GENUI_EXP_R",			GenUIEditor::OnExpSubmit,			'0',  '5'  },
+	{ "KANATUI_GENERATE_EXP_MODE",			KanatUIGenerateEditor::OnExpSubmit,			'\0', '\0' },
+	{ "KANATUI_GENERATE_EXP_UNIT",			KanatUIGenerateEditor::OnExpSubmit,			'\0', '\0' },
+	{ "KANATUI_GENERATE_EXP_R",			KanatUIGenerateEditor::OnExpSubmit,			'0',  '5'  },
 	// ---- 控件编辑区(ED): 标签行 / 文本行 / 事件行 / 尺寸轴 ----
 	// 注: 四者共用同一处理器(槽位由触发控件的 label 决定)。
-	{ "GENUI_ED_LBL",			GenUIEditor::OnEdSubmit,			'\0', '\0' },
-	{ "GENUI_ED_TEXT",			GenUIEditor::OnEdSubmit,			'\0', '\0' },
-	{ "GENUI_ED_EVENT",			GenUIEditor::OnEdSubmit,			'\0', '\0' },
-	{ "GENUI_ED_AXIS",			GenUIEditor::OnEdSubmit,			'\0', '\0' },
-	{ "GENUI_ED_PREV",			GenUIEditor::OnEdPrev,				'\0', '\0' },
+	{ "KANATUI_GENERATE_ED_LBL",			KanatUIGenerateEditor::OnEdSubmit,			'\0', '\0' },
+	{ "KANATUI_GENERATE_ED_TEXT",			KanatUIGenerateEditor::OnEdSubmit,			'\0', '\0' },
+	{ "KANATUI_GENERATE_ED_EVENT",			KanatUIGenerateEditor::OnEdSubmit,			'\0', '\0' },
+	{ "KANATUI_GENERATE_ED_AXIS",			KanatUIGenerateEditor::OnEdSubmit,			'\0', '\0' },
+	{ "KANATUI_GENERATE_ED_PREV",			KanatUIGenerateEditor::OnEdPrev,				'\0', '\0' },
 	// ---- 控件编辑区(ED)九格: 8 系数格(##FAC_SW_EDIT..##FAC_PAD_EDIT) + 像素偏移格(##FAC_OFS_EDIT) ----
 	// 注: 九格共用同一处理器(格号由触发控件 label 决定); 系数格 = 前缀家族 C0..C7。
-	{ "GENUI_ED_C",				GenUIEditor::OnEdCell,				'0',  '7'  },
-	{ "GENUI_ED_OFS",			GenUIEditor::OnEdCell,				'\0', '\0' },
+	{ "KANATUI_GENERATE_ED_C",				KanatUIGenerateEditor::OnEdCell,				'0',  '7'  },
+	{ "KANATUI_GENERATE_ED_OFS",			KanatUIGenerateEditor::OnEdCell,				'\0', '\0' },
 	// ---- 列表行事件: 布局列表(##LAYOUTS) / 控件列表(##CONTROLS) 两个列表共用同一处理器 ----
-	{ "GENUI_LIST_LM",			GenUIEditor::OnListRowEvent,		'\0', '\0' },
-	{ "GENUI_LIST_CL",			GenUIEditor::OnListRowEvent,		'\0', '\0' },
+	{ "KANATUI_GENERATE_LIST_LM",			KanatUIGenerateEditor::OnListRowEvent,		'\0', '\0' },
+	{ "KANATUI_GENERATE_LIST_CL",			KanatUIGenerateEditor::OnListRowEvent,		'\0', '\0' },
 	// ---- 提示布局(HINT)事件: 标题栏 / 确认 / 取消 ----
 	// 注: 三者由「提示布局」(内嵌(flex)成员; 无独立 HWND)的标题栏与两个按钮携带 ——
 	//     标题栏按住 = 移动该内嵌窗口的像素位置(不动 HWND) / 关闭钮 = "取消"结论(与 ##BTN_CANCEL 同义);
 	//     两个按钮 = 点击记录结论(确认 / 取消)。三个处理器均只落内存状态与诊断, 不改文档。
-	{ "HINT_TITLEBAR_EVENT",	GenUIEditor::OnHintTitleBarEvent,	'\0', '\0' },
-	{ "HINT_OK",				GenUIEditor::OnHintOk,				'\0', '\0' },
-	{ "HINT_CANCEL",			GenUIEditor::OnHintCancel,			'\0', '\0' },
+	{ "HINT_TITLEBAR_EVENT",	KanatUIGenerateEditor::OnHintTitleBarEvent,	'\0', '\0' },
+	{ "HINT_OK",				KanatUIGenerateEditor::OnHintOk,				'\0', '\0' },
+	{ "HINT_CANCEL",			KanatUIGenerateEditor::OnHintCancel,			'\0', '\0' },
 };
 
 // 函数: GetEventBindings
 // 描述: 取本模块的"事件名 → 处理函数"绑定表(宿主启动期注入 UIEventHandler::SetBindings; 见 GenEditor.h)
-CONST UIEventHandler::EventBinding* GenUIEditor::GetEventBindings(size_t* pnCount)
+CONST UIEventHandler::EventBinding* KanatUIGenerateEditor::GetEventBindings(size_t* pnCount)
 {
 	if (pnCount != NULL)
 	{
@@ -1078,7 +1078,7 @@ static BOOL DocLayoutLabelCore(DWORD index, LPSTR buf, size_t cap)
 //		IN	szAction:	即将进行的动作名
 // 返回:
 //		BOOL: TRUE = 可继续; FALSE = 用户选择取消
-BOOL GenUIEditor::ConfirmDiscardDirtyChanges(LPCSTR szAction)
+BOOL KanatUIGenerateEditor::ConfirmDiscardDirtyChanges(LPCSTR szAction)
 {
 	LPCSTR lpAct = (szAction != NULL) ? szAction : "该操作";
 	if (!IsDocDirtyCore())
@@ -1090,7 +1090,7 @@ BOOL GenUIEditor::ConfirmDiscardDirtyChanges(LPCSTR szAction)
 		snprintf(szMsg, sizeof(szMsg),
 			"当前文档有未保存的改动。\n\n继续「%s」将丢弃这些改动。",
 			lpAct);
-		if (ShowMessageBoxUtf8(szMsg, "GenUI 未保存改动提醒", MB_YESNO | MB_ICONWARNING,
+		if (ShowMessageBoxUtf8(szMsg, "Kanat UI Generate 未保存改动提醒", MB_YESNO | MB_ICONWARNING,
 			u8"继续", u8"取消") != IDYES)
 		{
 			printf("[APP] 未保存改动提醒: 用户取消「%s」\n", lpAct);
@@ -1119,7 +1119,7 @@ static BOOL OpenDocumentByPath(LPCSTR path)
 		return bRet;
 	}
 	// 打开新文件会替换当前文档: 有未保存改动先提醒(用户取消 ⇒ 不载入)
-	if (!GenUIEditor::ConfirmDiscardDirtyChanges("打开文件"))
+	if (!KanatUIGenerateEditor::ConfirmDiscardDirtyChanges("打开文件"))
 	{
 		return bRet;
 	}
@@ -1129,7 +1129,7 @@ static BOOL OpenDocumentByPath(LPCSTR path)
 		CHAR szMsg[1024]{};
 		snprintf(szMsg, sizeof(szMsg),
 			"文件损毁或格式不支持, 无法打开:\n\n%s\n\n将新建一个空白文档。", path);
-		ShowMessageBoxUtf8(szMsg, "GenUI 打开失败", MB_OK | MB_ICONWARNING, u8"确定", NULL);
+		ShowMessageBoxUtf8(szMsg, "Kanat UI Generate 打开失败", MB_OK | MB_ICONWARNING, u8"确定", NULL);
 		printf("[APP] 打开失败: %s ⇒ 新建空白文档\n", path);
 		fflush(stdout);
 		if (DocumentIO::NewDocument())
@@ -1165,11 +1165,11 @@ static VOID SyncFilePathShell()
 		bPathInit = TRUE;
 		if (szFilePath[0] == '\0')
 		{
-			// 优先取当前文档的关联文件(载入 bin 文档时即 .\GenUI.bin); 无关联再回落工程源 JSON 路径
+			// 优先取当前文档的关联文件(载入 bin 文档时即 .\KanatUIGenerate.bin); 无关联再回落工程源 JSON 路径
 			LPCSTR def = DocPathCore();
 			if (def == NULL || def[0] == '\0')
 			{
-				def = ResourceLoader::GetFilePath("GenUI.json");
+				def = ResourceLoader::GetFilePath("KanatUIGenerate.json");
 			}
 			strncpy_s(szFilePath, MAX_PATH, (def ? def : ""), _TRUNCATE);
 		}
@@ -1235,11 +1235,11 @@ static LPCSTR GetExeDirCached()
 }
 
 // 函数: OnBrowse
-// 描述: GENUI_BROWSE(文件行"浏览"): 文件对话框选择布局文件(过滤器含 bin / JSON), 选中即载入并刷新路径栏
+// 描述: KANATUI_GENERATE_BROWSE(文件行"浏览"): 文件对话框选择布局文件(过滤器含 bin / JSON), 选中即载入并刷新路径栏
 // 时机: 帧间事件 —— 由本函数自行代理: 渲染帧内触发(IsInFrame 为真)只把本函数挂到
 //       帧间队列并返回; 帧末排空(IsInFrame 为假)时才弹对话框并载入文档
 //       (载入会重建中间态池与预览基座内容控件)
-VOID GenUIEditor::OnBrowse(VOID* obj, uint64_t oper, uint64_t param, void* data)
+VOID KanatUIGenerateEditor::OnBrowse(VOID* obj, uint64_t oper, uint64_t param, void* data)
 {
 	// 回调四元组: 本处理器不需要其中任何一项(帧内挂载时按原值透传给排空入口)。
 	UNREFERENCED_PARAMETER(param);
@@ -1248,7 +1248,7 @@ VOID GenUIEditor::OnBrowse(VOID* obj, uint64_t oper, uint64_t param, void* data)
 	// 帧间事件代理: 渲染帧内触发 ⇒ 只入队并返回; 帧末排空 ⇒ 条件为假, 继续执行下方业务。
 	if (FrameEvent::IsInFrame())
 	{
-		FrameEvent::Post(GenUIEditor::OnBrowse, obj, oper, 0, data);
+		FrameEvent::Post(KanatUIGenerateEditor::OnBrowse, obj, oper, 0, data);
 		return;
 	}
 
@@ -1273,10 +1273,10 @@ VOID GenUIEditor::OnBrowse(VOID* obj, uint64_t oper, uint64_t param, void* data)
 	}
 }
 // 函数: OnCreate
-// 描述: GENUI_CREATE(文件行"创建"): 新建空白文档 —— 只创建新的中间态对象, 不生成真实文件;
+// 描述: KANATUI_GENERATE_CREATE(文件行"创建"): 新建空白文档 —— 只创建新的中间态对象, 不生成真实文件;
 //       创建后清空路径栏(新文档尚未关联任何文件)
 // 时机: 帧间事件 —— 帧内触发只挂载; 帧末排空时才新建文档(替换中间态池并重装预览基座内容控件)
-VOID GenUIEditor::OnCreate(VOID* obj, uint64_t oper, uint64_t param, void* data)
+VOID KanatUIGenerateEditor::OnCreate(VOID* obj, uint64_t oper, uint64_t param, void* data)
 {
 	// 回调四元组: 本处理器不需要其中任何一项(帧内挂载时按原值透传给排空入口)。
 	UNREFERENCED_PARAMETER(param);
@@ -1285,12 +1285,12 @@ VOID GenUIEditor::OnCreate(VOID* obj, uint64_t oper, uint64_t param, void* data)
 	// 帧间事件代理: 渲染帧内触发 ⇒ 只入队并返回; 帧末排空 ⇒ 条件为假, 继续执行下方业务。
 	if (FrameEvent::IsInFrame())
 	{
-		FrameEvent::Post(GenUIEditor::OnCreate, obj, oper, 0, data);
+		FrameEvent::Post(KanatUIGenerateEditor::OnCreate, obj, oper, 0, data);
 		return;
 	}
 
 	// 新建文档会替换当前文档: 有未保存改动先提醒(用户取消 ⇒ 不新建)
-	if (!GenUIEditor::ConfirmDiscardDirtyChanges("新建文档"))
+	if (!KanatUIGenerateEditor::ConfirmDiscardDirtyChanges("新建文档"))
 	{
 		return;
 	}
@@ -1304,9 +1304,9 @@ VOID GenUIEditor::OnCreate(VOID* obj, uint64_t oper, uint64_t param, void* data)
 	SyncFilePathShell();		// 立即把路径栏清空(不等下一帧)
 }
 // 函数: OnOpen
-// 描述: GENUI_OPEN(文件行"打开"): 载入路径栏当前所指文件(整文档); 路径为空时转为浏览
+// 描述: KANATUI_GENERATE_OPEN(文件行"打开"): 载入路径栏当前所指文件(整文档); 路径为空时转为浏览
 // 时机: 帧间事件 —— 帧内触发只挂载; 帧末排空时才载入(载入会重建文档与基座内容)
-VOID GenUIEditor::OnOpen(VOID* obj, uint64_t oper, uint64_t param, void* data)
+VOID KanatUIGenerateEditor::OnOpen(VOID* obj, uint64_t oper, uint64_t param, void* data)
 {
 	// 回调四元组: 本处理器不需要其中任何一项(帧内挂载时按原值透传给排空入口)。
 	UNREFERENCED_PARAMETER(param);
@@ -1315,7 +1315,7 @@ VOID GenUIEditor::OnOpen(VOID* obj, uint64_t oper, uint64_t param, void* data)
 	// 帧间事件代理: 渲染帧内触发 ⇒ 只入队并返回; 帧末排空 ⇒ 条件为假, 继续执行下方业务。
 	if (FrameEvent::IsInFrame())
 	{
-		FrameEvent::Post(GenUIEditor::OnOpen, obj, oper, 0, data);
+		FrameEvent::Post(KanatUIGenerateEditor::OnOpen, obj, oper, 0, data);
 		return;
 	}
 
@@ -1344,7 +1344,7 @@ static BOOL CheckSaveDataInteractive()
 		snprintf(szMsg, sizeof(szMsg),
 			"保存前检查: 同一布局内存在 Label 重名(按 Label 定位控件会产生歧义)。\n\n%s",
 			szReport);
-		if (ShowMessageBoxUtf8(szMsg, "GenUI 保存前检查", MB_YESNO | MB_ICONWARNING,
+		if (ShowMessageBoxUtf8(szMsg, "Kanat UI Generate 保存前检查", MB_YESNO | MB_ICONWARNING,
 			u8"忽略重名", u8"取消保存") != IDYES)
 		{
 			printf("[APP] 保存取消: 用户选择取消(Label 重名)\n");
@@ -1357,7 +1357,7 @@ static BOOL CheckSaveDataInteractive()
 		snprintf(szMsg, sizeof(szMsg),
 			"保存前检查: 存在元素 ID 未按数组序连续(0..N-1)的布局; 框架按 ID 访问元素。\n\n%s",
 			szReport);
-		if (ShowMessageBoxUtf8(szMsg, "GenUI 保存前检查", MB_YESNO | MB_ICONWARNING,
+		if (ShowMessageBoxUtf8(szMsg, "Kanat UI Generate 保存前检查", MB_YESNO | MB_ICONWARNING,
 			u8"自动重排", u8"保持原样") == IDYES)
 		{
 			NormalizeDocIdsCore();
@@ -1368,12 +1368,12 @@ static BOOL CheckSaveDataInteractive()
 	return bRet;
 }
 // 函数: OnSave
-// 描述: GENUI_SAVE(文件行"保存"): 整文档写盘 —— 路径栏非空 ⇒ 写该路径(工程源文档路径被拒并转另存为);
-//       路径栏为空 ⇒ 弹另存为对话框(默认名 GenUI.user.bin), 成功后新路径写回路径栏。
+// 描述: KANATUI_GENERATE_SAVE(文件行"保存"): 整文档写盘 —— 路径栏非空 ⇒ 写该路径(工程源文档路径被拒并转另存为);
+//       路径栏为空 ⇒ 弹另存为对话框(默认名 KanatUIGenerate.user.bin), 成功后新路径写回路径栏。
 //       写盘格式按目标扩展名分派(.bin ⇒ bin / 其余 ⇒ 规范 JSON; 见应用侧 SaveDocument);
 //       写盘前做数据体检(Label 重名 / ID 不连续 ⇒ 弹窗定夺; 见 CheckSaveDataInteractive)
 // 时机: 帧间事件 —— 帧内触发只挂载; 帧末排空时才写盘/弹对话框
-VOID GenUIEditor::OnSave(VOID* obj, uint64_t oper, uint64_t param, void* data)
+VOID KanatUIGenerateEditor::OnSave(VOID* obj, uint64_t oper, uint64_t param, void* data)
 {
 	// 回调四元组: 本处理器不需要其中任何一项(帧内挂载时按原值透传给排空入口)。
 	UNREFERENCED_PARAMETER(param);
@@ -1382,7 +1382,7 @@ VOID GenUIEditor::OnSave(VOID* obj, uint64_t oper, uint64_t param, void* data)
 	// 帧间事件代理: 渲染帧内触发 ⇒ 只入队并返回; 帧末排空 ⇒ 条件为假, 继续执行下方业务。
 	if (FrameEvent::IsInFrame())
 	{
-		FrameEvent::Post(GenUIEditor::OnSave, obj, oper, 0, data);
+		FrameEvent::Post(KanatUIGenerateEditor::OnSave, obj, oper, 0, data);
 		return;
 	}
 
@@ -1391,10 +1391,10 @@ VOID GenUIEditor::OnSave(VOID* obj, uint64_t oper, uint64_t param, void* data)
 	if (!bNeedDialog)
 	{
 		strncpy_s(szTarget, MAX_PATH, szFilePath, _TRUNCATE);
-		// 工程源保护: 当前文档来自 .\GenUI.json 加载路径且目标就是该文件 ⇒ 拒绝直存并转另存为
+		// 工程源保护: 当前文档来自 .\KanatUIGenerate.json 加载路径且目标就是该文件 ⇒ 拒绝直存并转另存为
 		if (DocumentIO::IsProtectedSavePath(szTarget))
 		{
-			printf("[APP] 保存被拒: 当前文档来自工程源文档(exe 目录 GenUI.json) ⇒ 转另存为\n");
+			printf("[APP] 保存被拒: 当前文档来自工程源文档(exe 目录 KanatUIGenerate.json) ⇒ 转另存为\n");
 			bNeedDialog = TRUE;
 			szTarget[0] = '\0';
 		}
@@ -1412,7 +1412,7 @@ VOID GenUIEditor::OnSave(VOID* obj, uint64_t oper, uint64_t param, void* data)
 		// 默认扩展名 = bin(bin 为设计最终形态)⇒ 用户不改扩展名时落 bin 文件
 		ofn.lpstrDefExt = "bin";
 		ofn.Flags = OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST;
-		strncpy_s(szFile, MAX_PATH, "GenUI.user.bin", _TRUNCATE);		// 默认名避开受保护的工程源文件
+		strncpy_s(szFile, MAX_PATH, "KanatUIGenerate.user.bin", _TRUNCATE);		// 默认名避开受保护的工程源文件
 		if (!GetSaveFileNameA(&ofn))
 		{
 			return;						// 取消: 路径栏保持原值
@@ -1433,13 +1433,13 @@ VOID GenUIEditor::OnSave(VOID* obj, uint64_t oper, uint64_t param, void* data)
 	SyncFilePathShell();				// 立即刷新路径栏(不等下一帧)
 }
 // 函数: OnInputActionEvent
-// 描述: GENUI_FILEPATH(文件行"路径动作"控件 = INPUT_ACTION): 按钮段点击 ⇒ 浏览(对话框选文件并载入);
+// 描述: KANATUI_GENERATE_FILEPATH(文件行"路径动作"控件 = INPUT_ACTION): 按钮段点击 ⇒ 浏览(对话框选文件并载入);
 //       输入段提交 ⇒ 把该控件输入文本写回文档路径(路径栏两向同步随后收敛)
 // 时机: 帧间事件 —— 按钮段会弹模态对话框并载入文档; 输入段提交同走帧间队列
 // 参数:
 //		IN	oper:	规范操作码(独立控件的部件结论进专属段: OPER_CUSTOM_IA_INPUT_SUBMIT /
 //					OPER_CUSTOM_IA_BTN_CLICKED; 帧间挂载时原样透传)
-VOID GenUIEditor::OnInputActionEvent(VOID* obj, uint64_t oper, uint64_t param, void* data)
+VOID KanatUIGenerateEditor::OnInputActionEvent(VOID* obj, uint64_t oper, uint64_t param, void* data)
 {
 	// 回调四元组: param/data 不使用(帧末按 label/类型重取该控件与其缓冲)。
 	UNREFERENCED_PARAMETER(param);
@@ -1448,7 +1448,7 @@ VOID GenUIEditor::OnInputActionEvent(VOID* obj, uint64_t oper, uint64_t param, v
 	// 帧间事件代理: 渲染帧内触发 ⇒ 只入队并返回; 帧末排空 ⇒ 条件为假, 继续执行下方业务。
 	if (FrameEvent::IsInFrame())
 	{
-		FrameEvent::Post(GenUIEditor::OnInputActionEvent, obj, oper, 0, data);
+		FrameEvent::Post(KanatUIGenerateEditor::OnInputActionEvent, obj, oper, 0, data);
 		return;
 	}
 
@@ -1494,7 +1494,7 @@ VOID GenUIEditor::OnInputActionEvent(VOID* obj, uint64_t oper, uint64_t param, v
 //		IN	oper:	规范操作码(公共位 = OPER_COMMON_HOLD 按住中(电平) · 专属段 = OPER_STRUCT_TITLE_CLOSE)
 //		IN	param:	按住期间 = 窗口期望坐标(PackWndPos 打包; 未按住或未建立拖动 = 0)
 //		IN	data:	该控件缓冲(标题文本; 本处理器不需要)
-VOID GenUIEditor::OnTitleBarEvent(VOID* obj, uint64_t oper, uint64_t param, void* data)
+VOID KanatUIGenerateEditor::OnTitleBarEvent(VOID* obj, uint64_t oper, uint64_t param, void* data)
 {
 	UNREFERENCED_PARAMETER(obj);
 	UNREFERENCED_PARAMETER(data);
@@ -1534,7 +1534,7 @@ VOID GenUIEditor::OnTitleBarEvent(VOID* obj, uint64_t oper, uint64_t param, void
 //		IN	oper:	规范操作码(公共位 = OPER_COMMON_HOLD 按住中(电平); 关闭专属码在本事件下不处理)
 //		IN	param:	按住期间 = 窗口期望坐标(PackWndPos 打包; 未按住或未建立拖动 = 0)
 //		IN	data:	该控件缓冲(标题文本; 本处理器不需要)
-VOID GenUIEditor::OnPreviewTitleBarEvent(VOID* obj, uint64_t oper, uint64_t param, void* data)
+VOID KanatUIGenerateEditor::OnPreviewTitleBarEvent(VOID* obj, uint64_t oper, uint64_t param, void* data)
 {
 	UNREFERENCED_PARAMETER(obj);
 	UNREFERENCED_PARAMETER(data);
@@ -1570,8 +1570,8 @@ VOID GenUIEditor::OnPreviewTitleBarEvent(VOID* obj, uint64_t oper, uint64_t para
 static VOID SetHintResult(INT nResult, LPCSTR szSource)
 {
 	nHintResult = nResult;
-	LPCSTR szName = (nResult == GenUIEditor::HINT_RESULT_OK) ? u8"确认" :
-		((nResult == GenUIEditor::HINT_RESULT_CANCEL) ? u8"取消" : u8"无");
+	LPCSTR szName = (nResult == KanatUIGenerateEditor::HINT_RESULT_OK) ? u8"确认" :
+		((nResult == KanatUIGenerateEditor::HINT_RESULT_CANCEL) ? u8"取消" : u8"无");
 	printf("[HINT] 结论 = %s(%s)\n", szName, (szSource != NULL) ? szSource : "");
 	fflush(stdout);
 }
@@ -1621,7 +1621,7 @@ static Layout* FindFlexTitleLayout(VOID* obj)
 //					专属段 = OPER_STRUCT_TITLE_CLOSE 请求关闭提示)
 //		IN	param:	未用(事件回调四元组约定)
 //		IN	data:	该控件缓冲(标题文本; 本处理器不需要)
-VOID GenUIEditor::OnHintTitleBarEvent(VOID* obj, uint64_t oper, uint64_t param, void* data)
+VOID KanatUIGenerateEditor::OnHintTitleBarEvent(VOID* obj, uint64_t oper, uint64_t param, void* data)
 {
 	UNREFERENCED_PARAMETER(param);
 	UNREFERENCED_PARAMETER(data);
@@ -1672,7 +1672,7 @@ VOID GenUIEditor::OnHintTitleBarEvent(VOID* obj, uint64_t oper, uint64_t param, 
 //		IN	oper:	规范操作码(公共码 OPER_COMMON_CLICKED)
 //		IN	param:	未用(事件回调四元组约定)
 //		IN	data:	该控件缓冲(按钮文本; 本处理器不需要)
-VOID GenUIEditor::OnHintOk(VOID* obj, uint64_t oper, uint64_t param, void* data)
+VOID KanatUIGenerateEditor::OnHintOk(VOID* obj, uint64_t oper, uint64_t param, void* data)
 {
 	UNREFERENCED_PARAMETER(obj);
 	UNREFERENCED_PARAMETER(param);
@@ -1690,7 +1690,7 @@ VOID GenUIEditor::OnHintOk(VOID* obj, uint64_t oper, uint64_t param, void* data)
 //		IN	oper:	规范操作码(公共码 OPER_COMMON_CLICKED)
 //		IN	param:	未用(事件回调四元组约定)
 //		IN	data:	该控件缓冲(按钮文本; 本处理器不需要)
-VOID GenUIEditor::OnHintCancel(VOID* obj, uint64_t oper, uint64_t param, void* data)
+VOID KanatUIGenerateEditor::OnHintCancel(VOID* obj, uint64_t oper, uint64_t param, void* data)
 {
 	UNREFERENCED_PARAMETER(obj);
 	UNREFERENCED_PARAMETER(param);
@@ -1706,7 +1706,7 @@ VOID GenUIEditor::OnHintCancel(VOID* obj, uint64_t oper, uint64_t param, void* d
 // 说明: 与 OnHintOk / OnHintCancel 的差别只在结论来源文案(诊断可区分"按钮点击"与"键盘");
 // 参数:
 //		IN	bOk:	TRUE = 确认(Enter); FALSE = 取消(ESC)
-VOID GenUIEditor::OnHintKey(BOOL bOk)
+VOID KanatUIGenerateEditor::OnHintKey(BOOL bOk)
 {
 	SetHintResult(bOk ? HINT_RESULT_OK : HINT_RESULT_CANCEL, bOk ? "Enter" : "ESC");
 }
@@ -1756,7 +1756,7 @@ static vec2 GetAutoPlacePos(const vec2& sz)
 }
 // 函数: AddControlCore
 // 描述: 向 active 布局添加控件并选中新控件
-BOOL GenUIEditor::AddControlCore(CtrlType type)
+BOOL KanatUIGenerateEditor::AddControlCore(CtrlType type)
 {
 	BOOL bRet = FALSE;
 	if (pMain == NULL)
@@ -1833,7 +1833,7 @@ BOOL GenUIEditor::AddControlCore(CtrlType type)
 
 // ================================
 // 区域: EXP 释放控件数据桥(镜像同步)
-// 说明: GenUIEditor 布局中 EXP 区的释放控件为同层平铺(模式/单位 Combo + 参数 RECT
+// 说明: KanatUIGenerateEditor 布局中 EXP 区的释放控件为同层平铺(模式/单位 Combo + 参数 RECT
 //       区域 + 六格名称 TEXT/数值 INPUT_SINGLE), 显示数据源 = active 布局的参考尺寸/经验参数(中间态 RefSize),
 //       经本区域函数在"外壳渲染路径"每帧桥接: Update() 调 SyncExpShell() 把配置换算成
 //       显示文本写回外壳控件缓冲(权威文本副本保护: 用户编辑中的格不被打断)。
@@ -2228,7 +2228,7 @@ static VOID SyncExpShell()
 }
 
 // 函数: OnExpSubmit
-// 描述: GENUI_EXP_R0..R5(经验参数区六数值格)/ GENUI_EXP_MODE(模式下拉)/ GENUI_EXP_UNIT(单位下拉)提交:
+// 描述: KANATUI_GENERATE_EXP_R0..R5(经验参数区六数值格)/ KANATUI_GENERATE_EXP_MODE(模式下拉)/ KANATUI_GENERATE_EXP_UNIT(单位下拉)提交:
 //       数值格 = 把该格的值按该条目单位折算写回其来源布局的 autosize, 并按新参考尺寸就地更新
 //       预览基座控件几何; 模式 = 写该布局的换算基准模式串并就地重解; 单位 = 写该布局的参考量单位
 //       (单位只决定入参解释, 存储恒千分比 ⇒ 几何不变)
@@ -2239,7 +2239,7 @@ static VOID SyncExpShell()
 //		IN	oper:	规范操作码(帧末分派不使用; 槽位一律走 param)
 //		IN	param:	帧末执行时承载"槽位序号"(0..5 = 六数值格; 6 = 模式; 7 = 单位)
 //		IN	data:	该控件缓冲(帧内不读取; 帧末按 label 重取)
-VOID GenUIEditor::OnExpSubmit(VOID* obj, uint64_t oper, uint64_t param, void* data)
+VOID KanatUIGenerateEditor::OnExpSubmit(VOID* obj, uint64_t oper, uint64_t param, void* data)
 {
 	UNREFERENCED_PARAMETER(oper);
 	UNREFERENCED_PARAMETER(data);
@@ -2278,7 +2278,7 @@ VOID GenUIEditor::OnExpSubmit(VOID* obj, uint64_t oper, uint64_t param, void* da
 		// (与 FrameEvent::Post 的合并判据配合: 同帧不同槽位 param 不同 ⇒ 不会被误合并)
 		// 注: 模式/单位两槽是 COMBO(控件库报"值变更")⇒ 与六数值格共用同一规范码
 		//     (该规范码 = OperCode::MakeCodeOwn(OPER_EDIT_SUBMIT); 语义见"内部工具函数实现区"说明)
-		FrameEvent::Post(GenUIEditor::OnExpSubmit, NULL, OperCode::MakeCodeOwn(OPER_EDIT_SUBMIT), (uint64_t)nSlot, NULL);
+		FrameEvent::Post(KanatUIGenerateEditor::OnExpSubmit, NULL, OperCode::MakeCodeOwn(OPER_EDIT_SUBMIT), (uint64_t)nSlot, NULL);
 		return;
 	}
 	// 2. 帧末: 按格序号(param)重新取该格控件与缓冲(帧内持有的对象引用已不可依赖)
@@ -2352,12 +2352,12 @@ VOID GenUIEditor::OnExpSubmit(VOID* obj, uint64_t oper, uint64_t param, void* da
 
 // ================================
 // 区域: ED 释放控件数据桥(镜像同步 + 事件提交)
-// 说明: GenUIEditor 布局中 ED 区的释放控件为同层平铺(类型只读 TEXT + 标签/文本/事件
+// 说明: KanatUIGenerateEditor 布局中 ED 区的释放控件为同层平铺(类型只读 TEXT + 标签/文本/事件
 //       单行输入 + 尺寸轴 Combo + 系数 RECT区域 + 8 系数格 + 偏移格), 显示数据源 = active
 //       布局选中控件(nSelected/pMain), 经本区域函数每帧桥接: Update() 调 EdSyncShell() 把
 //       选中控件属性换算成显示文本写回外壳释放控件缓冲 —— 与 SyncExpShell 同构的"权威文本
 //       副本"编辑中保护(仅当缓冲 == 权威副本才回填, 用户编辑中的格不被打断); 四类提交
-//       (GENUI_ED_LBL/TEXT/EVENT/AXIS)均为失焦提交, 由 OnEdSubmit 处理器经帧间队列
+//       (KANATUI_GENERATE_ED_LBL/TEXT/EVENT/AXIS)均为失焦提交, 由 OnEdSubmit 处理器经帧间队列
 //       分派到 EdApplyLabel/EdApplyText/EdApplyEvent/EdApplyAxis 落库 —— 标签/文本/事件名
 //       写中间态元素规格后请求预览同步, 尺寸轴只切本编辑区当前编辑轴;
 //       系数/偏移提交(EdApplyCoeff/EdApplyOffset)后按系数重算选中控件几何。
@@ -2591,7 +2591,7 @@ static VOID EdSyncShell()
 		}
 		return;
 	}
-	// 4. 标签行(失焦提交: 编辑中不回写, 提交由 GENUI_ED_LBL 事件落库)
+	// 4. 标签行(失焦提交: 编辑中不回写, 提交由 KANATUI_GENERATE_ED_LBL 事件落库)
 	{
 		char* buf = NULL;
 		size_t cap = 0;
@@ -2607,7 +2607,7 @@ static VOID EdSyncShell()
 			// 否则: 该行未被回填(缓冲 != 权威), 跳过(不改来源)
 		}
 	}
-	// 5. 文本行(失焦提交: 编辑中不回写, 提交由 GENUI_ED_TEXT 事件落库到中间态)
+	// 5. 文本行(失焦提交: 编辑中不回写, 提交由 KANATUI_GENERATE_ED_TEXT 事件落库到中间态)
 	{
 		char* buf = NULL;
 		size_t cap = 0;
@@ -2718,7 +2718,7 @@ static VOID EdSyncShell()
 }
 
 // 函数: EdApplyCoeff
-// 描述: GENUI_ED_C0..C7 处理器核心(系数格 INPUT_REAL 提交事件触发): 读该格 double 缓冲
+// 描述: KANATUI_GENERATE_ED_C0..C7 处理器核心(系数格 INPUT_REAL 提交事件触发): 读该格 double 缓冲
 //       值(InputDouble 已把用户输入解析为数值)写选中控件当前轴因子系数并重算
 //       几何; 无因子或未选中 → 忽略并把该格显示还原为 0
 // 参数:
@@ -2768,7 +2768,7 @@ static VOID EdApplyCoeff(INT idx)
 }
 
 // 函数: EdApplyOffset
-// 描述: GENUI_ED_OFS 处理器核心(像素固定偏移格 INPUT_REAL 提交事件触发): 读该格 double
+// 描述: KANATUI_GENERATE_ED_OFS 处理器核心(像素固定偏移格 INPUT_REAL 提交事件触发): 读该格 double
 //       缓冲值, 取整写选中控件当前轴因子 offset 并重算几何;
 //       无因子/未选中语义同 EdApplyCoeff(还原 0); 偏移恒为整数(LONG)
 static VOID EdApplyOffset()
@@ -2827,7 +2827,7 @@ static ElementSpec* EdElSpecOf(CtrlInfo* sel, INT idx)
 }
 
 // 函数: EdApplyLabel
-// 描述: GENUI_ED_LBL 处理器核心(标签行失焦提交): 读该行文本缓冲, 写来源控件的中间态元素标签;
+// 描述: KANATUI_GENERATE_ED_LBL 处理器核心(标签行失焦提交): 读该行文本缓冲, 写来源控件的中间态元素标签;
 //       来源失效 ⇒ 放弃提交并把权威副本归一为缓冲值(下帧镜像按当前选中重填)
 static VOID EdApplyLabel()
 {
@@ -2860,7 +2860,7 @@ static VOID EdApplyLabel()
 }
 
 // 函数: EdApplyText
-// 描述: GENUI_ED_TEXT 处理器核心(文本行失焦提交): 读该行文本缓冲, 写来源控件的中间态元素文本,
+// 描述: KANATUI_GENERATE_ED_TEXT 处理器核心(文本行失焦提交): 读该行文本缓冲, 写来源控件的中间态元素文本,
 //       并调用中间态 -> 布局对象的同步刷新预览基座
 // 说明: 预览同步(结构件就地刷新/内容控件重装)按 es->text 写控件缓冲。
 static VOID EdApplyText()
@@ -2891,7 +2891,7 @@ static VOID EdApplyText()
 }
 
 // 函数: EdApplyEvent
-// 描述: GENUI_ED_EVENT 处理器核心(事件行失焦提交): 读该行文本缓冲, 写来源控件的中间态元素 event 名
+// 描述: KANATUI_GENERATE_ED_EVENT 处理器核心(事件行失焦提交): 读该行文本缓冲, 写来源控件的中间态元素 event 名
 // 说明: 事件名存于中间态元素规格(控件对象只持事件处理函数指针, 不持名字);
 //       内容控件重装即按新名重绑(结构件的事件绑定保留)。
 static VOID EdApplyEvent()
@@ -2920,7 +2920,7 @@ static VOID EdApplyEvent()
 }
 
 // 函数: EdApplyPrev
-// 描述: GENUI_ED_PREV 处理器核心(前序 ID 行失焦提交): 读该行整数缓冲, 写来源控件的中间态元素
+// 描述: KANATUI_GENERATE_ED_PREV 处理器核心(前序 ID 行失焦提交): 读该行整数缓冲, 写来源控件的中间态元素
 //       parentID 与布局对象控件 parentID(两处同义), 并按父链整体重推层次与有效坐标
 // 说明: ①取值归一: 负数一律归 -1(无父容器; 0 是合法 ID);
 //       ②自指(前序 ID = 自身 ID)拒绝入库(保持现值), 成环仍允许声明(模型按无父降级, 见 Layout);
@@ -2983,7 +2983,7 @@ static VOID EdApplyPrev()
 }
 
 // 函数: EdApplyAxis
-// 描述: GENUI_ED_AXIS 处理器核心(尺寸轴下拉提交): 写本编辑区当前编辑轴(nAxis)
+// 描述: KANATUI_GENERATE_ED_AXIS 处理器核心(尺寸轴下拉提交): 写本编辑区当前编辑轴(nAxis)
 // 说明: 尺寸轴是编辑区的显示/取值轴, 不是文档数据(中间态元素恒有四个轴系数)
 //       ⇒ 不改中间态、不请求预览同步; 系数格与偏移格下帧按新轴回填。
 static VOID EdApplyAxis()
@@ -3004,7 +3004,7 @@ static VOID EdApplyAxis()
 }
 
 // 函数: OnEdSubmit
-// 描述: GENUI_ED_LBL / GENUI_ED_TEXT / GENUI_ED_EVENT / GENUI_ED_AXIS 提交:
+// 描述: KANATUI_GENERATE_ED_LBL / KANATUI_GENERATE_ED_TEXT / KANATUI_GENERATE_ED_EVENT / KANATUI_GENERATE_ED_AXIS 提交:
 //       标签行 = 写来源控件的中间态元素标签; 文本行 = 写中间态元素文本并刷新控件缓冲;
 //       事件行 = 写中间态元素 event 名; 尺寸轴 = 切换本编辑区当前编辑轴(不改文档数据)
 // 时机: 帧间事件 —— 帧内按触发控件 label 定位槽位并把槽位进 param 挂帧间队列(操作码恒为规范码);
@@ -3014,7 +3014,7 @@ static VOID EdApplyAxis()
 //		IN	oper:	规范操作码(帧末分派不使用; 槽位一律走 param)
 //		IN	param:	帧末执行时承载槽位序号(ED_SLOT_*)
 //		IN	data:	该控件缓冲(帧内不读取; 帧末按 label 重取)
-VOID GenUIEditor::OnEdSubmit(VOID* obj, uint64_t oper, uint64_t param, void* data)
+VOID KanatUIGenerateEditor::OnEdSubmit(VOID* obj, uint64_t oper, uint64_t param, void* data)
 {
 	UNREFERENCED_PARAMETER(oper);
 	UNREFERENCED_PARAMETER(data);
@@ -3047,7 +3047,7 @@ VOID GenUIEditor::OnEdSubmit(VOID* obj, uint64_t oper, uint64_t param, void* dat
 			return;
 		}
 		// 挂载: oper = 编辑族规范码 · param = 槽位序号(同帧不同槽位 param 不同 ⇒ 不会被误合并)
-		FrameEvent::Post(GenUIEditor::OnEdSubmit, NULL, OperCode::MakeCodeOwn(OPER_EDIT_SUBMIT), (uint64_t)nSlot, NULL);
+		FrameEvent::Post(KanatUIGenerateEditor::OnEdSubmit, NULL, OperCode::MakeCodeOwn(OPER_EDIT_SUBMIT), (uint64_t)nSlot, NULL);
 		return;
 	}
 	// 2. 帧末: 按槽位(param)分派到各提交核心(核心内部按 label 重取控件与其缓冲)
@@ -3074,14 +3074,14 @@ VOID GenUIEditor::OnEdSubmit(VOID* obj, uint64_t oper, uint64_t param, void* dat
 }
 
 // 函数: OnEdPrev
-// 描述: GENUI_ED_PREV 提交(控件编辑区前序 ID 行失焦提交)
+// 描述: KANATUI_GENERATE_ED_PREV 提交(控件编辑区前序 ID 行失焦提交)
 // 时机: 帧间事件 —— 帧内只挂帧间队列(操作码恒为规范码); 帧末排空时按 label 重取该行控件与其缓冲
 // 参数:
 //		IN	obj:	触发控件(帧内不使用; 帧末按 label 重取)
 //		IN	oper:	规范操作码(帧末分派不使用)
 //		IN	param:	帧末执行时承载槽位序号(恒 ED_SLOT_PREV)
 //		IN	data:	该控件缓冲(帧内不读取)
-VOID GenUIEditor::OnEdPrev(VOID* obj, uint64_t oper, uint64_t param, void* data)
+VOID KanatUIGenerateEditor::OnEdPrev(VOID* obj, uint64_t oper, uint64_t param, void* data)
 {
 	UNREFERENCED_PARAMETER(obj);
 	UNREFERENCED_PARAMETER(oper);
@@ -3090,7 +3090,7 @@ VOID GenUIEditor::OnEdPrev(VOID* obj, uint64_t oper, uint64_t param, void* data)
 	// 1. 帧内: 只挂帧间队列(槽位固定, 不依赖触发控件)
 	if (FrameEvent::IsInFrame())
 	{
-		FrameEvent::Post(GenUIEditor::OnEdPrev, NULL, OperCode::MakeCodeOwn(OPER_EDIT_SUBMIT),
+		FrameEvent::Post(KanatUIGenerateEditor::OnEdPrev, NULL, OperCode::MakeCodeOwn(OPER_EDIT_SUBMIT),
 			(uint64_t)ED_SLOT_PREV, NULL);
 		return;
 	}
@@ -3109,14 +3109,14 @@ VOID GenUIEditor::OnEdPrev(VOID* obj, uint64_t oper, uint64_t param, void* data)
 // ================================
 
 // 函数: OnEdCell
-// 描述: GENUI_ED_C0..C7 / GENUI_ED_OFS 提交(系数格/像素偏移格失焦提交)
+// 描述: KANATUI_GENERATE_ED_C0..C7 / KANATUI_GENERATE_ED_OFS 提交(系数格/像素偏移格失焦提交)
 // 时机: 帧间事件 —— 帧内按 label 定位格号并挂载(格号走 param); 帧末按格号分派到系数/偏移提交核心
 // 参数:
 //		IN	obj:	触发控件(帧内用于定位格号)
 //		IN	oper:	规范操作码(帧末分派不使用; 格号一律走 param)
 //		IN	param:	帧末执行时承载格号(0..7 = 系数; 9 = 像素偏移)
 //		IN	data:	该控件缓冲(帧内不读取; 帧末按 label 重取)
-VOID GenUIEditor::OnEdCell(VOID* obj, uint64_t oper, uint64_t param, void* data)
+VOID KanatUIGenerateEditor::OnEdCell(VOID* obj, uint64_t oper, uint64_t param, void* data)
 {
 	UNREFERENCED_PARAMETER(oper);
 	UNREFERENCED_PARAMETER(data);
@@ -3148,7 +3148,7 @@ VOID GenUIEditor::OnEdCell(VOID* obj, uint64_t oper, uint64_t param, void* data)
 			return;			// 非九格触发(不该发生): 不挂载
 		}
 		// 挂载: oper = 编辑族规范码 · param = 格号(同帧不同格 param 不同 ⇒ 不会被误合并)
-		FrameEvent::Post(GenUIEditor::OnEdCell, NULL, OperCode::MakeCodeOwn(OPER_EDIT_SUBMIT), (uint64_t)nCell, NULL);
+		FrameEvent::Post(KanatUIGenerateEditor::OnEdCell, NULL, OperCode::MakeCodeOwn(OPER_EDIT_SUBMIT), (uint64_t)nCell, NULL);
 		return;
 	}
 	// 2. 帧末: 按格号(param)分派到提交核心(核心内部按 label 重取控件与其缓冲)
@@ -3242,7 +3242,7 @@ static ListBuffer* ListDataOf(CtrlInfo* pListCtrl)
 //     帧末以"挂载时保存的控件指针"与壳内两列表指针比对判定; 见 OnListRowEvent)。
 
 // 函数: OnListRowEvent
-// 描述: GENUI_LIST_LM / GENUI_LIST_CL(外壳两个列表的行事件): 把行件上报的规范操作码解释为列表意图,
+// 描述: KANATUI_GENERATE_LIST_LM / KANATUI_GENERATE_LIST_CL(外壳两个列表的行事件): 把行件上报的规范操作码解释为列表意图,
 //       交意图消费者 ApplyListOper 改文档(点选 / 改名 / 删除 / 改类型); 拖拽重排经同一入口交 ApplyListMove
 // 时机: 帧间事件 —— 帧内只做"来源控件是两列表之一"的准入判定, 随后把 控件指针(obj) + 规范操作码(oper)
 //       + 行号(param) 原样挂帧间队列; 帧末按控件指针定位列表归属并重取该列表控件与其缓冲
@@ -3257,7 +3257,7 @@ static ListBuffer* ListDataOf(CtrlInfo* pListCtrl)
 //		IN	oper:	规范操作码(三段编码, 帧内忽略, 帧末解码)
 //		IN	param:	来源行号(普通行 = 行号; 重排 = 源行号)
 //		IN	data:	未用(帧间挂载时传 NULL; 帧末按控件指针重取该列表缓冲)
-VOID GenUIEditor::OnListRowEvent(VOID* obj, uint64_t oper, uint64_t param, void* data)
+VOID KanatUIGenerateEditor::OnListRowEvent(VOID* obj, uint64_t oper, uint64_t param, void* data)
 {
 	UNREFERENCED_PARAMETER(data);
 	// 1. 帧内: 准入判定(只认两列表)⇒ 原样挂帧间队列; 操作码保持规范编码(列表归属不进 oper)
@@ -3271,7 +3271,7 @@ VOID GenUIEditor::OnListRowEvent(VOID* obj, uint64_t oper, uint64_t param, void*
 		}
 		// 挂载: obj = 列表控件(帧末据此定位列表归属; 同时使两列表同帧事件不被合并) · param = 行号
 		// (合并判据含 oper/param ⇒ 同帧不同行 param 不同, 不会被误合并)
-		FrameEvent::Post(GenUIEditor::OnListRowEvent, obj, oper, param, NULL);
+		FrameEvent::Post(KanatUIGenerateEditor::OnListRowEvent, obj, oper, param, NULL);
 		return;
 	}
 	// 2. 帧末: 列表归属定位(指针比对, 不解引用) + 操作码解码 + 按控件指针重取该列表与其缓冲
@@ -3550,7 +3550,7 @@ static BOOL ApplyListOper(CtrlType type, DWORD dwOper)
 			{
 				return bRet;			// 拒绝新增标题栏
 			}
-			bRet = GenUIEditor::AddControlCore(PaletteType(nPaletteIdx));
+			bRet = KanatUIGenerateEditor::AddControlCore(PaletteType(nPaletteIdx));
 		}
 	}
 	return bRet;
@@ -3690,7 +3690,7 @@ static BOOL ApplyListMove(CtrlType type, DWORD dwSrc, DWORD dwDest)
 //		IN	oper:	规范操作码(公共段含 OPER_COMMON_CLICKED 时才登记)
 //		IN	param:	渲染出口派发时携带的控件索引(控件库派发时为 0; 反查失败时作兜底)
 //		IN	data:	该控件缓冲(本处理器不使用)
-VOID GenUIEditor::OnPreviewClick(VOID* obj, uint64_t oper, uint64_t param, void* data)
+VOID KanatUIGenerateEditor::OnPreviewClick(VOID* obj, uint64_t oper, uint64_t param, void* data)
 {
 	UNREFERENCED_PARAMETER(data);
 	CtrlInfo* c = (CtrlInfo*)obj;
@@ -3750,7 +3750,7 @@ VOID GenUIEditor::OnPreviewClick(VOID* obj, uint64_t oper, uint64_t param, void*
 	fPreviewClickH = c->size.y;
 	// 8. 预览点击 = 选择该控件: 同步编辑器选中(编辑布局的编辑区随之切换到该控件)
 	//    注: 本函数在预览渲染帧内被调用 ⇒ 此处不得改控件链(遍历中增删会打乱本帧的绘制与命中);
-	//    选中态表达件(链外视图叠加件)由下一帧的 GenUIEditor::Update(第 5 步)交给 SelectionOverlay
+	//    选中态表达件(链外视图叠加件)由下一帧的 KanatUIGenerateEditor::Update(第 5 步)交给 SelectionOverlay
 	nSelected = nIndex;
 	nSynced = -2;						// 选择变化 ⇒ 触发属性区重新同步
 	SyncEditsToSel();
@@ -3763,7 +3763,7 @@ VOID GenUIEditor::OnPreviewClick(VOID* obj, uint64_t oper, uint64_t param, void*
 //		OUT	pfW/pfH:	像素大小(可空)
 // 返回:
 //		BOOL: TRUE = 已有记录; FALSE = 尚无点击记录
-BOOL GenUIEditor::GetPreviewClickRecord(INT* pnIndex, FLOAT* pfX, FLOAT* pfY, FLOAT* pfW, FLOAT* pfH)
+BOOL KanatUIGenerateEditor::GetPreviewClickRecord(INT* pnIndex, FLOAT* pfX, FLOAT* pfY, FLOAT* pfW, FLOAT* pfH)
 {
 	if (!bPreviewClickValid)
 	{
@@ -3778,7 +3778,7 @@ BOOL GenUIEditor::GetPreviewClickRecord(INT* pnIndex, FLOAT* pfX, FLOAT* pfY, FL
 }
 // 函数: ResetPreviewClickRecord
 // 描述: 清除点击记录
-VOID GenUIEditor::ResetPreviewClickRecord()
+VOID KanatUIGenerateEditor::ResetPreviewClickRecord()
 {
 	bPreviewClickValid = FALSE;
 	bPreviewClickPrint = FALSE;		// 待打印标志一并复位(否则下一帧会打印一条"空记录")

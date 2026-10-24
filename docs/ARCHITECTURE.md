@@ -2,7 +2,7 @@
 
 ## 1. 定位与边界
 
-GenUI 是一个 Windows 原生的声明式界面框架，以及一个用该框架自身实现的界面设计器。界面结构由布局文档（JSON 或二进制 `.bin`）描述，代码里不写死界面；设计器负责增删控件、调整几何、打开与保存文档，预览窗口实时呈现被编辑的布局。
+Kanat UI Generate 是一个 Windows 原生的声明式界面框架，以及一个用该框架自身实现的界面设计器。界面结构由布局文档（JSON 或二进制 `.bin`）描述，代码里不写死界面；设计器负责增删控件、调整几何、打开与保存文档，预览窗口实时呈现被编辑的布局。
 
 边界：
 
@@ -36,10 +36,10 @@ app\            应用层:双窗口宿主、应用主类、启动加载链、文
 
 | 级别 | 来源 | 形态 |
 | :--- | :--- | :--- |
-| 1 | exe 目录 `.\GenUI.bin`（外部文件） | bin |
-| 2 | exe 目录 `.\GenUI.json`（外部文件） | JSON |
-| 3 | 内置资源 `resource.res\GenUI.bin` | bin |
-| 4 | 内置资源 `resource.res\GenUI.json` | JSON |
+| 1 | exe 目录 `.\KanatUIGenerate.bin`（外部文件） | bin |
+| 2 | exe 目录 `.\KanatUIGenerate.json`（外部文件） | JSON |
+| 3 | 内置资源 `resource.res\KanatUIGenerate.bin` | bin |
+| 4 | 内置资源 `resource.res\KanatUIGenerate.json` | JSON |
 
 形态由内容嗅探判定，与扩展名无关；四级全未命中或全部载入被拒时启动中止，不内置代码回退。未内嵌资源时，把示例文档放到 exe 同目录即可命中第 2 级。
 
@@ -55,11 +55,11 @@ main.cpp
        │    ├─ 注入文档承载者 / 旁挂表反查 / 会话回调
        │    ├─ 启动加载链载入文档 → 中间态
        │    ├─ 逐布局构建文档条目(链式布局对象 + 参考尺寸 + 元信息)
-       │    ├─ 解析保留名 GenUIEditor 的外壳布局为只读快照
+       │    ├─ 解析保留名 KanatUIGenerateEditor 的外壳布局为只读快照
        │    └─ 由外壳源装配内嵌(flex)窗口成员
        ├─ 建两个标准窗口(编辑窗口 + 预览窗口),建立 ImGui / D3D11 面
        ├─ 注入事件绑定表、命令层回调、宿主能力
-       ├─ GenUIEditor::Init(注册控件选中回调、校验外壳锚点)
+       ├─ KanatUIGenerateEditor::Init(注册控件选中回调、校验外壳锚点)
        └─ 运行主循环:每帧一次 FrameOnce
 ```
 
@@ -188,7 +188,7 @@ pfnCtrlEvent(obj, oper, param, data)
 编辑器的两个窗口都由布局文档驱动：
 
 - **预览窗口**：渲染当前激活布局。所有布局条目共享同一个"唯一预览基座"布局对象；切换激活布局时把该布局的内容重装进基座，而不是为每份布局各留一个布局对象。
-- **编辑窗口**：渲染文档中保留名 `GenUIEditor` 的布局（外壳布局）的只读快照。外壳快照只在启动时解析一次，会话内固定；界面本身也是 GenUI 布局，因此设计器是自举的。
+- **编辑窗口**：渲染文档中保留名 `KanatUIGenerateEditor` 的布局（外壳布局）的只读快照。外壳快照只在启动时解析一次，会话内固定；界面本身也是 Kanat UI Generate 布局，因此设计器是自举的。
 - **内嵌成员**：外壳快照内可以挂"无独立窗口句柄的内嵌窗口"（提示布局），由外壳源同一份解析产物装配，与快照同生命周期。
 
 编辑器逻辑分三件：
@@ -219,9 +219,9 @@ pfnCtrlEvent(obj, oper, param, data)
 
 ```text
 FrameOnce
-  ├─ 无人值守:到点请求退出(GENUI_AUTOCLOSE_MS)
+  ├─ 无人值守:到点请求退出(KANATUI_GENERATE_AUTOCLOSE_MS)
   ├─ 确保投影配色(跟随系统亮暗;每帧重建采样方向)
-  ├─ 编辑窗口段:GenUIEditor::Update → RenderBase(外壳快照)→ RenderFlex(内嵌成员)→ IME 口径
+  ├─ 编辑窗口段:KanatUIGenerateEditor::Update → RenderBase(外壳快照)→ RenderFlex(内嵌成员)→ IME 口径
   ├─ 预览窗口段:RenderPreviewBase(激活布局 + 点击判定 + 选中叠加件)
   └─ FrameEvent::Drain(本帧挂载的帧间事件)
 ```

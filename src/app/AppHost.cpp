@@ -190,20 +190,20 @@ INT AppHost::Run()
 
 	ImGuiHost::EnableDpiAwareness();
 
-	// 1. 注入"事件绑定表"与"预览布局内容控件的点击事件处理器" + 初始化应用文档(GenUI.json) + 注入文档承载者
+	// 1. 注入"事件绑定表"与"预览布局内容控件的点击事件处理器" + 初始化应用文档(KanatUIGenerate.json) + 注入文档承载者
 	//    ① 事件绑定表: 表内容是本编辑器的处理函数, 而 framework\UIEventHandler 不得反向依赖
 	//       editor ⇒ 由宿主注入(见 UIEventHandler.h)。
 	//       同样必须早于 Application::Init(Init 载入文档时即按 event 名解析处理器)。
 	{
 		size_t nBindings = 0;
-		CONST UIEventHandler::EventBinding* pBindings = GenUIEditor::GetEventBindings(&nBindings);
+		CONST UIEventHandler::EventBinding* pBindings = KanatUIGenerateEditor::GetEventBindings(&nBindings);
 		UIEventHandler::SetBindings(pBindings, nBindings);
 	}
 	//    ② 预览点击记录器: 注入必须早于 Application::Init(首次装配预览基座内容控件时就生效):
 	//       装配点把每枚内容控件的 pEventHandler 一律改绑为该记录器(覆盖其文档 event 的原处理器,
 	//       不转调) ⇒ 预览窗口里点控件只记录点击(索引 / 位置 / 大小), 不触发真实业务事件(预览是展示面,
 	//       不得驱动保存 / 新建 / 打开一类动作); 结构件不覆盖(预览标题栏的拖动等既有绑定保留)。
-	HostContext::SetInjectClickHandler(GenUIEditor::OnPreviewClick);
+	HostContext::SetInjectClickHandler(KanatUIGenerateEditor::OnPreviewClick);
 	if (!Application::Init())
 	{
 		ERRTEXT = L"应用程序初始化失败!";
@@ -216,7 +216,7 @@ INT AppHost::Run()
 	//       不依赖 AppData ⇒ 可以早于 Init; 本处不可) ⇒ 不得按"注入一律放在 Init 之前"的惯例提前。
 	//       复位口径: 必须在 Application::Release() 之前以 NULL 复位(见下方 MAIN_APP_RELEASE 标签处),
 	//       否则承载者随 AppData 失效 ⇒ 编辑器侧留悬垂指针。
-	GenUIEditor::SetDocument(Application::GetDocument());
+	KanatUIGenerateEditor::SetDocument(Application::GetDocument());
 	// 启动装配: 预览基座内容按当前 active 条目的中间态装配一次(此后由编辑动作经帧末同步更新)
 	PreviewSession::SyncPreviewLayout();
 	// 命令层会话面回调注入: 命令层不持会话面状态(预览唯一基座 / 文档版本号) ⇒ 布局族命令改完中间态后
@@ -229,11 +229,11 @@ INT AppHost::Run()
 	//   就地注入(承载者按值内嵌在 AppData 内 ⇒ 必须晚于分配成员存储那一步)。
 	DocumentIO::SetDocLayoutAdder(&EditorCommands::AddDocLayout);
 	// 2. 初始化布局编辑器(注册回调)
-	GenUIEditor::Init();
+	KanatUIGenerateEditor::Init();
 
 	// 3. 声明两枚标准窗口(编辑窗口 + 预览窗口)的几何与身份
-	// 编辑窗口: 客户区尺寸 = GenUI.json 中外壳布局(GenUIEditor)的描述(autosize 千分比 × 换算基准 / 1000);
-	// 快照无效(文档无 GenUIEditor)时无描述可依 ⇒ 按屏占比(34% 屏宽 × 94% 屏高)取尺寸;
+	// 编辑窗口: 客户区尺寸 = KanatUIGenerate.json 中外壳布局(KanatUIGenerateEditor)的描述(autosize 千分比 × 换算基准 / 1000);
+	// 快照无效(文档无 KanatUIGenerateEditor)时无描述可依 ⇒ 按屏占比(34% 屏宽 × 94% 屏高)取尺寸;
 	// 该情形随后由启动校验判定无效并中止(见第 5 步 PreviewSession::GetShellValid)
 	{
 		int iScreenW = GetSystemMetrics(SM_CXSCREEN);
@@ -250,7 +250,7 @@ INT AppHost::Run()
 			{
 				iEditW = (int)ww;
 				iEditH = (int)wh;
-				lpszSizeSrc = "GenUI.json 外壳布局 autosize";
+				lpszSizeSrc = "KanatUIGenerate.json 外壳布局 autosize";
 			}
 			else
 			{
@@ -268,7 +268,7 @@ INT AppHost::Run()
 		int iEditY = (int)(iScreenH * 0.03f);
 		printf("[MAIN] 编辑窗口尺寸: %dx%d (来源: %s)\n", iEditW, iEditH, lpszSizeSrc);
 		specs[WND_EDIT].lpszClassName = L"GENUIEDITWND";
-		specs[WND_EDIT].lpszTitle = L"GenUI - 布局编辑器";
+		specs[WND_EDIT].lpszTitle = L"Kanat UI Generate - 布局编辑器";
 		specs[WND_EDIT].x = iEditX;
 		specs[WND_EDIT].y = iEditY;
 		specs[WND_EDIT].dwWidth = (DWORD)iEditW;
@@ -286,7 +286,7 @@ INT AppHost::Run()
 		if (ww < 32) { ww = 32; }
 		if (wh < 32) { wh = 32; }
 		specs[WND_PREVIEW].lpszClassName = L"GENUIPREVWND";
-		specs[WND_PREVIEW].lpszTitle = L"GenUI - 预览窗口";
+		specs[WND_PREVIEW].lpszTitle = L"Kanat UI Generate - 预览窗口";
 		specs[WND_PREVIEW].x = (INT)wx;
 		specs[WND_PREVIEW].y = (INT)wy;
 		specs[WND_PREVIEW].dwWidth = ww;
@@ -353,23 +353,23 @@ INT AppHost::Run()
 	// 5. 无人值守参数 + 提示展示器 + 外壳快照校验
 	{
 		char szEnv[32]{};
-		if (GetEnvironmentVariableA("GENUI_AUTOCLOSE_MS", szEnv, 32) > 0)
+		if (GetEnvironmentVariableA("KANATUI_GENERATE_AUTOCLOSE_MS", szEnv, 32) > 0)
 		{
 			dwAutoCloseMs = (DWORD)atoi(szEnv);
 		}
 		// 注入同步提示展示器: 编辑器侧的弹窗统一入口据此把提示切到「提示布局」(同步等待)
 		HostContext::SetHintSyncHandler(RunHintSync);
-		// 编辑窗口内容 = 外壳布局(GenUIEditor 快照)的声明式渲染
+		// 编辑窗口内容 = 外壳布局(KanatUIGenerateEditor 快照)的声明式渲染
 		// 快照无效 ⇒ 打印诊断并中止启动(此处不设 ERRTEXT, 诊断走 stdout + 退出码)
 		if (!PreviewSession::GetShellValid())
 		{
-			printf("[MAIN] 外壳布局快照无效: 文档缺少 name==GenUIEditor 的布局(或无结构件/解析失败)\n");
+			printf("[MAIN] 外壳布局快照无效: 文档缺少 name==KanatUIGenerateEditor 的布局(或无结构件/解析失败)\n");
 			printf("[MAIN] 编辑窗口无可渲染内容, 且已无内置回退(渲染回退已移除) ⇒ 启动中止\n");
 			fflush(stdout);
 			ret = 1;
 			goto MAIN_CLN_IMGUI;
 		}
-		printf("[MAIN] 编辑窗口渲染: 外壳布局(GenUIEditor 快照)\n");
+		printf("[MAIN] 编辑窗口渲染: 外壳布局(KanatUIGenerateEditor 快照)\n");
 	}
 
 	// 6. 主循环: 由 ImGuiHost 驱动(每帧消费消息后固定调用一次 FrameOnce)
@@ -384,7 +384,7 @@ MAIN_APP_RELEASE:
 	ProjCR::Release(pProjCR);	// 投影配色: 先释放(轴位置表须在分配器解绑前归还小对象池)
 	// 文档承载者随 Application::Release() 失效 ⇒ 先复位为 NULL(与 Init 内窗口句柄的复位同法;
 	//   时序硬约束见上方 ③ 注入点说明 —— 顺序颠倒 ⇒ 编辑器侧留悬垂指针)
-	GenUIEditor::SetDocument(NULL);
+	KanatUIGenerateEditor::SetDocument(NULL);
 	EditorCommands::SetSessionHooks(NULL, NULL, NULL);	// 会话回调随承载者一并复位(须早于 Application::Release)
 	DocumentIO::SetDocLayoutAdder(NULL);				// 命令面回调同点复位(须早于 Application::Release;
 														//   承载者与 I/O 侧会话回调由 Application::Release 内复位)
@@ -392,7 +392,7 @@ MAIN_APP_RELEASE:
 MAIN_END:
 	if (ERRTEXT)
 	{
-		MessageBox(NULL, ERRTEXT, L"GenUI 错误", MB_OK | MB_ICONERROR);
+		MessageBox(NULL, ERRTEXT, L"Kanat UI Generate 错误", MB_OK | MB_ICONERROR);
 	}
 	return ret;
 }
@@ -437,12 +437,12 @@ static FLOAT ProjSampleConcave(DWORD dwParam, DWORD dwLayers)
 //       方向在"喂给采样函数之前"反射层号 ⇒ 采样函数本身的单调性不受方向影响
 static VOID EnsureProjCR()
 {
-	// 诊断开关(仅复核用; 不改变系统设置): GENUI_PROJCR_LIGHT=1 ⇒ 强制按亮色模式取色,
+	// 诊断开关(仅复核用; 不改变系统设置): KANATUI_GENERATE_PROJCR_LIGHT=1 ⇒ 强制按亮色模式取色,
 	// 便于无人值守下对两种模式各自取证(未设该变量时行为不变)
 	BOOL bForceLight = FALSE;
 	{
 		CHAR szForce[32]{};
-		if (GetEnvironmentVariableA("GENUI_PROJCR_LIGHT", szForce, 32) > 0 && atoi(szForce) != 0)
+		if (GetEnvironmentVariableA("KANATUI_GENERATE_PROJCR_LIGHT", szForce, 32) > 0 && atoi(szForce) != 0)
 		{
 			bForceLight = TRUE;
 		}
@@ -505,7 +505,7 @@ static VOID RenderEditFrame()
 	// 投影配色(宿主唯一持有; 编辑帧与预览帧共用同一投影 ⇒ 同屏层次口径一致)
 	EnsureProjCR();
 	// 渲染前联动(选中 / 缓冲)
-	GenUIEditor::Update();
+	KanatUIGenerateEditor::Update();
 	// 编辑窗口内容 = 外壳布局的声明式渲染(快照有效性已在启动期校验)
 	// 严格模态: 「提示布局」展示期间(bHintModalActive)
 	// 编辑窗口传 bNoInputs = TRUE ⇒ 窗口级无输入; 提示布局是内嵌(flex)成员、走 RenderFlex ⇒ 不受影响
@@ -546,7 +546,7 @@ static VOID RenderPreviewFrame()
 	{
 		// 预览布局专属入口: 逐枚内容控件做点击判定(命中即派发给编辑器侧点击记录器) +
 		// 编辑器选中态视图叠加件(链外绘制; 见 editor\SelectionOverlay)
-		LayoutRender::RenderPreviewBase(active, Application::GetActiveRef(), pProjCR, GenUIEditor::OnPreviewClick,
+		LayoutRender::RenderPreviewBase(active, Application::GetActiveRef(), pProjCR, KanatUIGenerateEditor::OnPreviewClick,
 			SelectionOverlay::OnBeforeCtrl);
 	}
 }
@@ -700,11 +700,11 @@ static BOOL RunHintSync(CONST HintSpec& spec)
 		return bRet;		// 重入: 已有提示在展示
 	}
 	// 按需显示: 提示布局装配后默认非活动(平时不渲染) ⇒ 展示前置为活动, 用毕复位(见函数末)
-	FlexHost::SetFlexActive(GENUI_HINT_LAYOUT_NAME, TRUE);
+	FlexHost::SetFlexActive(KANATUI_GENERATE_HINT_LAYOUT_NAME, TRUE);
 	ppFlex = FlexHost::GetActiveFlexLayouts(PreviewSession::GetShellLayout(), &dwFlex);
 	if (ppFlex == NULL || dwFlex == 0)
 	{
-		FlexHost::SetFlexActive(GENUI_HINT_LAYOUT_NAME, FALSE);	// 未装配 ⇒ 复位并交调用方回落
+		FlexHost::SetFlexActive(KANATUI_GENERATE_HINT_LAYOUT_NAME, FALSE);	// 未装配 ⇒ 复位并交调用方回落
 		return bRet;
 	}
 	pHint = ppFlex[0];
@@ -777,9 +777,9 @@ static BOOL RunHintSync(CONST HintSpec& spec)
 		}
 	}
 	// 4. 同步等待: 泵消息 + 渲染编辑帧, 直到结论落定(确认 / 取消 / 退出)
-	GenUIEditor::ResetHintResult();
+	KanatUIGenerateEditor::ResetHintResult();
 	bHintModalActive = TRUE;
-	while (GenUIEditor::GetHintResult() == GenUIEditor::HINT_RESULT_NONE)
+	while (KanatUIGenerateEditor::GetHintResult() == KanatUIGenerateEditor::HINT_RESULT_NONE)
 	{
 		MSG msg;
 		while (PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE))
@@ -797,10 +797,10 @@ static BOOL RunHintSync(CONST HintSpec& spec)
 		RenderEditFrame();
 		ImGuiHost::FinalizeFrame();
 	}
-	bRet = (GenUIEditor::GetHintResult() == GenUIEditor::HINT_RESULT_OK) ? TRUE : FALSE;
+	bRet = (KanatUIGenerateEditor::GetHintResult() == KanatUIGenerateEditor::HINT_RESULT_OK) ? TRUE : FALSE;
 HINT_END:
 	bHintModalActive = FALSE;
-	FlexHost::SetFlexActive(GENUI_HINT_LAYOUT_NAME, FALSE);	// 按需显示: 用毕复位(不再渲染提示)
+	FlexHost::SetFlexActive(KANATUI_GENERATE_HINT_LAYOUT_NAME, FALSE);	// 按需显示: 用毕复位(不再渲染提示)
 	if (pOk != NULL && bOkOverridden)
 	{
 		SetHintCtrlText(pOk, szOkBack);			// 恢复"确认"按钮原文本(免污染下次展示)
@@ -813,7 +813,7 @@ HINT_END:
 			SetHintCtrlText(pCancel, szCancelBack);	// 恢复"取消"按钮原文本
 		}
 	}
-	GenUIEditor::ResetHintResult();
+	KanatUIGenerateEditor::ResetHintResult();
 	return bRet;
 }
 
@@ -839,7 +839,7 @@ LRESULT WINAPI BizWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		// 注: 提示展示期间(bHintModalActive)不再受理关闭请求(重入守卫)
 		if (hWnd == hWndEdit && !bHintModalActive)
 		{
-			if (!GenUIEditor::ConfirmDiscardDirtyChanges("关闭窗口"))
+			if (!KanatUIGenerateEditor::ConfirmDiscardDirtyChanges("关闭窗口"))
 			{
 				return 0;
 			}
@@ -855,7 +855,7 @@ LRESULT WINAPI BizWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		{
 			if (wParam == VK_RETURN || wParam == VK_ESCAPE)
 			{
-				GenUIEditor::OnHintKey((wParam == VK_RETURN) ? TRUE : FALSE);
+				KanatUIGenerateEditor::OnHintKey((wParam == VK_RETURN) ? TRUE : FALSE);
 				return 0;
 			}
 		}

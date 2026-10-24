@@ -1,7 +1,7 @@
 // ================================
 // 文件: GenEditor.h
-// 描述: GenUI 布局编辑器逻辑(多布局版)
-//   术语: "外壳" = GenUI 自身界面的那个布局(GenUIEditor 布局)。
+// 描述: Kanat UI Generate 布局编辑器逻辑(多布局版)
+//   术语: "外壳" = Kanat UI Generate 自身界面的那个布局(KanatUIGenerateEditor 布局)。
 // ================================
 #pragma once
 #include <minwindef.h>
@@ -12,10 +12,10 @@
 struct Document;	// 文档承载者(doc\Document; 前向声明即够 ⇒ 头层不引 app/ 头, 保持 editor → doc 单向)
 
 // ================================
-// 命名空间: GenUIEditor
+// 命名空间: KanatUIGenerateEditor
 // 描述: 布局编辑器静态逻辑(函数均为进程级单例语义)
 // ================================
-namespace GenUIEditor
+namespace KanatUIGenerateEditor
 {
 	// 函数: SetDocument
 	// 描述: 注入文档承载者(宿主在 Application::Init() 成功之后单点调用一次; NULL = 复位/未注入)
@@ -134,30 +134,30 @@ namespace GenUIEditor
 	//		IN	bOk:	TRUE = 确认(Enter); FALSE = 取消(ESC)
 	VOID OnHintKey(BOOL bOk);
 	// 函数: OnBrowse
-	// 描述: GENUI_BROWSE(文件行"浏览"): 打开文件对话框选择布局文件, 选中即载入并刷新路径栏
+	// 描述: KANATUI_GENERATE_BROWSE(文件行"浏览"): 打开文件对话框选择布局文件, 选中即载入并刷新路径栏
 	// 时机: 帧间事件 —— 本函数自行代理: 帧内触发只把自身挂到帧间队列并返回;
 	//       帧末排空时才弹对话框并载入(载入会重建中间态池与预览基座内容控件)
 	// 参数: 回调四元组不使用(显式忽略)
 	VOID OnBrowse(VOID* obj, uint64_t oper, uint64_t param, void* data);
 	// 函数: OnCreate
-	// 描述: GENUI_CREATE(文件行"创建"): 新建空白文档 —— 只创建新的中间态对象, 不生成真实文件;
+	// 描述: KANATUI_GENERATE_CREATE(文件行"创建"): 新建空白文档 —— 只创建新的中间态对象, 不生成真实文件;
 	//       创建后清空路径栏(新文档尚未关联任何文件)
 	// 时机: 帧间事件 —— 帧内触发只挂载; 帧末排空时才新建文档(替换中间态池并重装预览基座内容控件)
 	// 参数: 回调四元组不使用(显式忽略)
 	VOID OnCreate(VOID* obj, uint64_t oper, uint64_t param, void* data);
 	// 函数: OnOpen
-	// 描述: GENUI_OPEN(文件行"打开"): 载入路径栏当前所指文件(整文档); 路径为空时转为浏览
+	// 描述: KANATUI_GENERATE_OPEN(文件行"打开"): 载入路径栏当前所指文件(整文档); 路径为空时转为浏览
 	// 时机: 帧间事件 —— 帧内触发只挂载; 帧末排空时才载入(载入会重建文档与基座内容)
 	// 参数: 回调四元组不使用(显式忽略)
 	VOID OnOpen(VOID* obj, uint64_t oper, uint64_t param, void* data);
 	// 函数: OnSave
-	// 描述: GENUI_SAVE(文件行"保存"): 整文档写盘 —— 路径栏非空 ⇒ 写该路径(工程源文档路径被拒并转另存为);
-	//       路径栏为空 ⇒ 弹另存为对话框(默认名 GenUI.user.json), 成功后新路径写回路径栏
+	// 描述: KANATUI_GENERATE_SAVE(文件行"保存"): 整文档写盘 —— 路径栏非空 ⇒ 写该路径(工程源文档路径被拒并转另存为);
+	//       路径栏为空 ⇒ 弹另存为对话框(默认名 KanatUIGenerate.user.json), 成功后新路径写回路径栏
 	// 时机: 帧间事件 —— 帧内触发只挂载; 帧末排空时才写盘/弹对话框(与 浏览/创建/打开 同组)
 	// 参数: 回调四元组不使用(显式忽略)
 	VOID OnSave(VOID* obj, uint64_t oper, uint64_t param, void* data);
 	// 函数: OnInputActionEvent
-	// 描述: GENUI_FILEPATH(文件行"路径动作"控件 = INPUT_ACTION)的部件结论:
+	// 描述: KANATUI_GENERATE_FILEPATH(文件行"路径动作"控件 = INPUT_ACTION)的部件结论:
 	//       按钮段被点击 ⇒ 浏览(弹文件对话框选文件并载入, 路径栏随之刷新);
 	//       输入段提交 ⇒ 把该控件输入文本写回文档路径(路径栏两向同步随后收敛)
 	// 时机: 帧间事件 —— 按钮段会弹模态对话框并载入文档
@@ -166,7 +166,7 @@ namespace GenUIEditor
 	//					OPER_CUSTOM_IA_BTN_CLICKED(按钮段点击); 帧间挂载时原样透传)
 	VOID OnInputActionEvent(VOID* obj, uint64_t oper, uint64_t param, void* data);
 	// 函数: OnExpSubmit
-	// 描述: GENUI_EXP_R0..R5(经验参数区六数值格)/ GENUI_EXP_MODE(模式下拉)/ GENUI_EXP_UNIT(单位下拉)提交:
+	// 描述: KANATUI_GENERATE_EXP_R0..R5(经验参数区六数值格)/ KANATUI_GENERATE_EXP_MODE(模式下拉)/ KANATUI_GENERATE_EXP_UNIT(单位下拉)提交:
 	//       数值格 = 把该格的值按该条目单位折算写回其来源布局的 autosize, 并按新参考尺寸就地
 	//       更新预览基座控件几何(不做整体重装); 模式 = 写该布局的换算基准模式串并就地重解;
 	//       单位 = 写该布局的参考量单位(单位只决定入参解释, 中间态存储恒千分比)
@@ -179,7 +179,7 @@ namespace GenUIEditor
 	//		IN	data:	该控件缓冲(帧内不读取; 帧末按 label 重取)
 	VOID OnExpSubmit(VOID* obj, uint64_t oper, uint64_t param, void* data);
 	// 函数: OnEdSubmit
-	// 描述: GENUI_ED_LBL / GENUI_ED_TEXT / GENUI_ED_EVENT / GENUI_ED_AXIS(控件编辑区四类提交):
+	// 描述: KANATUI_GENERATE_ED_LBL / KANATUI_GENERATE_ED_TEXT / KANATUI_GENERATE_ED_EVENT / KANATUI_GENERATE_ED_AXIS(控件编辑区四类提交):
 	//       标签行 = 写来源控件的中间态元素标签; 文本行 = 写该元素的文本并刷新控件缓冲;
 	//       事件行 = 写该元素的 event 名; 尺寸轴 = 只切本编辑区当前轴
 	//       (轴不是文档数据 ⇒ 不改中间态, 只改镜像/系数格的取值轴)
@@ -192,7 +192,7 @@ namespace GenUIEditor
 	//		IN	data:	该控件缓冲(帧内不读取; 帧末按 label 重取)
 	VOID OnEdSubmit(VOID* obj, uint64_t oper, uint64_t param, void* data);
 	// 函数: OnEdPrev
-	// 描述: GENUI_ED_PREV(控件编辑区前序 ID 行提交): 读该行整数缓冲, 写来源控件的中间态
+	// 描述: KANATUI_GENERATE_ED_PREV(控件编辑区前序 ID 行提交): 读该行整数缓冲, 写来源控件的中间态
 	//       parentID 与布局对象控件的 parentID, 并按父链整体重推层次与有效坐标
 	// 时机: 帧间事件 —— 帧内只挂帧间队列(操作码恒为规范码 OPER_EDIT_SUBMIT);
 	//       帧末排空时按 label 重取该行控件与其缓冲(帧内持有的对象引用在帧末可能失效)
@@ -203,7 +203,7 @@ namespace GenUIEditor
 	//		IN	data:	该控件缓冲(帧内不读取)
 	VOID OnEdPrev(VOID* obj, uint64_t oper, uint64_t param, void* data);
 	// 函数: OnEdCell
-	// 描述: GENUI_ED_C0..C7 / GENUI_ED_OFS(控件编辑区九格: 8 系数格 + 像素偏移格):
+	// 描述: KANATUI_GENERATE_ED_C0..C7 / KANATUI_GENERATE_ED_OFS(控件编辑区九格: 8 系数格 + 像素偏移格):
 	//       读该格 double 缓冲值, 写来源控件当前轴的因子系数/像素偏移,
 	//       并就地重解该控件像素几何 ⇒ 预览窗口下一帧即按新几何渲染
 	// 时机: 帧间事件 —— 帧内按触发控件 label 定位格号并把格号进 param 挂帧间队列(操作码恒为规范码
@@ -215,7 +215,7 @@ namespace GenUIEditor
 	//		IN	data:	该控件缓冲(帧内不读取; 帧末按 label 重取)
 	VOID OnEdCell(VOID* obj, uint64_t oper, uint64_t param, void* data);
 	// 函数: OnListRowEvent
-	// 描述: GENUI_LIST_LM / GENUI_LIST_CL(外壳两个列表的行事件): 把行件上报的规范操作码解释为列表意图,
+	// 描述: KANATUI_GENERATE_LIST_LM / KANATUI_GENERATE_LIST_CL(外壳两个列表的行事件): 把行件上报的规范操作码解释为列表意图,
 	//       交意图消费者改文档(布局列表: 行激活=切 active / 部件提交=改名 / 部件按钮=删除;
 	//       控件列表: 行激活=选中控件 / 部件变更=改类型 / 部件按钮=删除); 拖拽重排交重排消费者
 	// 时机: 帧间事件 —— 帧内只做"来源控件是两列表之一"的准入判定, 随后把 控件指针(obj) + 规范操作码(oper)
@@ -248,7 +248,7 @@ namespace GenUIEditor
 	// ================================
 	// 区域: 预览布局内容控件点击记录
 	// 说明: 「注入预览布局」= 由 app\PreviewSession::SyncPreviewLayout 装配进预览布局基座的内容控件;
-	//   ① 事件绑定: 启动期经 HostContext::SetInjectClickHandler(GenUIEditor::OnPreviewClick)
+	//   ① 事件绑定: 启动期经 HostContext::SetInjectClickHandler(KanatUIGenerateEditor::OnPreviewClick)
 	//      注入 ⇒ 装配点把每枚内容控件的 pEventHandler 一律改绑为下方记录器(覆盖其文档
 	//      event 的原处理器, 不转调) —— 预览是展示面, 点控件只产生"点击记录", 不触发真实
 	//      业务事件; 结构件不覆盖(预览标题栏的拖动等既有绑定保留) ② 判定范围: 由渲染出口

@@ -5,10 +5,10 @@
 发布树包含：
 
 ```text
-GenUI/
+KanatUI-Generate/
 ├─ src/                            框架、文档层、编辑器层与应用层源码
 ├─ docs/                           工程文档
-│  ├─ examples/GenUI.json          自举布局文档（设计器自身的界面）
+│  ├─ examples/KanatUIGenerate.json          自举布局文档（设计器自身的界面）
 │  └─ LICENSE.md                   MIT 许可
 └─ README.md
 ```
@@ -83,11 +83,11 @@ vcpkg install rapidjson:x64-windows-static
 
 ### 4.3 生成与运行
 
-选择 `Release|x64` 生成，得到 `GenUI.exe`。把 [docs/examples/GenUI.json](examples/GenUI.json) 复制到 exe 同目录并命名为 `GenUI.json`，然后运行：
+选择 `Release|x64` 生成，得到 `KanatUIGenerate.exe`。把 [docs/examples/KanatUIGenerate.json](examples/KanatUIGenerate.json) 复制到 exe 同目录并命名为 `KanatUIGenerate.json`，然后运行：
 
 ```powershell
 cd out\Release
-.\GenUI.exe
+.\KanatUIGenerate.exe
 ```
 
 ### 4.4 内嵌文档资源（可选）
@@ -100,16 +100,16 @@ cd out\Release
 #pragma code_page(65001)
 #include "src\app\resource.h"
 
-IDR_GENUI_JSON JSON "docs\examples\GenUI.json"
+IDR_KANATUI_GENERATE_JSON JSON "docs\examples\KanatUIGenerate.json"
 ```
 
-`IDR_GENUI_JSON` = 101、`IDR_GENUI_BIN` = 102 定义在 `src/app/resource.h`；资源类型是自定义串 `JSON` / `BIN`，运行期按这两个名字查找。若同时提供 `GenUI.bin`，再补一行：
+`IDR_KANATUI_GENERATE_JSON` = 101、`IDR_KANATUI_GENERATE_BIN` = 102 定义在 `src/app/resource.h`；资源类型是自定义串 `JSON` / `BIN`，运行期按这两个名字查找。若同时提供 `KanatUIGenerate.bin`，再补一行：
 
 ```rc
-IDR_GENUI_BIN BIN "out\GenUI.bin"
+IDR_KANATUI_GENERATE_BIN BIN "out\KanatUIGenerate.bin"
 ```
 
-`GenUI.bin` 可用设计器的"保存"把 JSON 另存为 `.bin` 得到（保存方向见 [LAYOUT-FORMAT.md](LAYOUT-FORMAT.md) 第 9 节）。
+`KanatUIGenerate.bin` 可用设计器的"保存"把 JSON 另存为 `.bin` 得到（保存方向见 [LAYOUT-FORMAT.md](LAYOUT-FORMAT.md) 第 9 节）。
 
 ## 5. 用 cl 命令行构建
 
@@ -142,18 +142,18 @@ cl /nologo /std:c++20 /EHsc /MT /O2 /utf-8 /Zc:char8_t- `
    /D_AMD64_ /DUNICODE /D_UNICODE `
    /I src /I $imgui /I "$imgui\backends" /I $rapidjson `
    $src $imguiSrc `
-   /Fe:out\GenUI.exe `
+   /Fe:out\KanatUIGenerate.exe `
    /link d3d11.lib dxgi.lib dwmapi.lib imm32.lib comdlg32.lib user32.lib gdi32.lib
 ```
 
 复制布局文档并运行：
 
 ```powershell
-Copy-Item docs\examples\GenUI.json out\GenUI.json
-.\out\GenUI.exe
+Copy-Item docs\examples\KanatUIGenerate.json out\KanatUIGenerate.json
+.\out\KanatUIGenerate.exe
 ```
 
-Debug 版本把 `/MT /O2` 改为 `/MTd /Od /Zi`，并把输出改为 `out\GenUIDebug.exe`。
+Debug 版本把 `/MT /O2` 改为 `/MTd /Od /Zi`，并把输出改为 `out\KanatUIGenerateDebug.exe`。
 
 如果使用 vcpkg 或已有预编译 ImGui 库，去掉 `$imguiSrc`，在 `/link` 后加入 `imgui.lib` 的完整路径，并把包含目录指向对应的 `include`。
 
@@ -161,32 +161,32 @@ Debug 版本把 `/MT /O2` 改为 `/MTd /Od /Zi`，并把输出改为 `out\GenUID
 
 工作目录必须是可执行文件所在目录，布局文档按 exe 同目录解释。加载链依次为：
 
-1. `.\GenUI.bin`（exe 目录外部文件）
-2. `.\GenUI.json`（exe 目录外部文件）
-3. 内嵌资源 `resource.res\GenUI.bin`
-4. 内嵌资源 `resource.res\GenUI.json`
+1. `.\KanatUIGenerate.bin`（exe 目录外部文件）
+2. `.\KanatUIGenerate.json`（exe 目录外部文件）
+3. 内嵌资源 `resource.res\KanatUIGenerate.bin`
+4. 内嵌资源 `resource.res\KanatUIGenerate.json`
 
 命中即用，不再探测后续级别；形态由内容嗅探判定，与扩展名无关。
 
 | 环境变量 | 作用 |
 | :--- | :--- |
-| `GENUI_AUTOCLOSE_MS` | 启动后 N 毫秒自动退出（无人值守用）；不设则常驻 |
-| `GENUI_PROJCR_LIGHT` | 置 1 强制按亮色模式取色（诊断用；不改变系统设置） |
+| `KANATUI_GENERATE_AUTOCLOSE_MS` | 启动后 N 毫秒自动退出（无人值守用）；不设则常驻 |
+| `KANATUI_GENERATE_PROJCR_LIGHT` | 置 1 强制按亮色模式取色（诊断用；不改变系统设置） |
 
 示例：
 
 ```powershell
-$env:GENUI_AUTOCLOSE_MS = 1500
-.\GenUI.exe
+$env:KANATUI_GENERATE_AUTOCLOSE_MS = 1500
+.\KanatUIGenerate.exe
 ```
 
 退出方式：`ESC` 或 `Alt+F4`；有未保存改动时先弹出确认。
 
 ## 7. 布局文档
 
-`docs/examples/GenUI.json` 是设计器自身的完整布局，含三份布局：`预览布局`（预览画布）、`GenUIEditor`（编辑窗口外壳，保留名）与 `提示布局`（内嵌提示窗口）。
+`docs/examples/KanatUIGenerate.json` 是设计器自身的完整布局，含三份布局：`预览布局`（预览画布）、`KanatUIGenerateEditor`（编辑窗口外壳，保留名）与 `提示布局`（内嵌提示窗口）。
 
-启动时程序按保留名 `GenUIEditor` 查找外壳布局；缺该布局会直接退出（退出码 1），因此自定义文档必须保留一份同名布局。字段、控件类型、尺寸因子与二进制格式见 [LAYOUT-FORMAT.md](LAYOUT-FORMAT.md)。
+启动时程序按保留名 `KanatUIGenerateEditor` 查找外壳布局；缺该布局会直接退出（退出码 1），因此自定义文档必须保留一份同名布局。字段、控件类型、尺寸因子与二进制格式见 [LAYOUT-FORMAT.md](LAYOUT-FORMAT.md)。
 
 ## 8. 排障
 
@@ -199,7 +199,7 @@ $env:GENUI_AUTOCLOSE_MS = 1500
 | 链接报 `LNK2019`（`CreateDXGIFactory`、`GetOpenFileNameW` 等） | 未链接 `d3d11.lib`、`dxgi.lib`、`dwmapi.lib`、`imm32.lib`、`comdlg32.lib` |
 | 编译报 `C7555` 或 C++20 语法错误 | 语言标准未设为 C++20 |
 | 源码中文乱码或编译告警 | 缺少 `/utf-8` 或 `/Zc:char8_t-` |
-| 启动弹窗"应用初始化失败" | 工作目录不对，或 exe 同目录没有 `GenUI.json` / `GenUI.bin`，且未内嵌资源 |
-| 启动打印"外壳布局快照无效" | 文档缺少 `name == GenUIEditor` 的布局，或该布局缺结构件、解析失败 |
-| 修改 JSON 后界面没变 | 同目录存在旧的 `GenUI.bin`，加载链优先 bin；删除或重新生成 |
+| 启动弹窗"应用初始化失败" | 工作目录不对，或 exe 同目录没有 `KanatUIGenerate.json` / `KanatUIGenerate.bin`，且未内嵌资源 |
+| 启动打印"外壳布局快照无效" | 文档缺少 `name == KanatUIGenerateEditor` 的布局，或该布局缺结构件、解析失败 |
+| 修改 JSON 后界面没变 | 同目录存在旧的 `KanatUIGenerate.bin`，加载链优先 bin；删除或重新生成 |
 | 窗口不出现 | 需要可交互的 Windows 桌面会话 |

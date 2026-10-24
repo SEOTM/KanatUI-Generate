@@ -63,8 +63,8 @@ struct EventBinding
 
 - 完整名(`chDigitLo == '\0'`): 与 `szEvent` 逐字符精确比较, 全等才算命中。
 - 前缀家族(`chDigitLo != '\0'`): `szEvent` 作为前缀, 其后须恰有一位数字且落在
-  [`chDigitLo`, `chDigitHi`] 闭区间内, 且再之后即字符串结束(例: 前缀 `GENUI_EXP_R` 配 `'0'` 到 `'5'`
-  覆盖 `GENUI_EXP_R0` 到 `GENUI_EXP_R5`)。前缀之后还有多余字符(例如两位数字)不算命中。
+  [`chDigitLo`, `chDigitHi`] 闭区间内, 且再之后即字符串结束(例: 前缀 `KANATUI_GENERATE_EXP_R` 配 `'0'` 到 `'5'`
+  覆盖 `KANATUI_GENERATE_EXP_R0` 到 `KANATUI_GENERATE_EXP_R5`)。前缀之后还有多余字符(例如两位数字)不算命中。
 
 表按数组序线性匹配、命中即止 ⇒ 若表中出现相互重叠的条目, 先出现者生效; 现行表内各条互不重叠,
 因此顺序不影响结果。`szEvent` 为 `NULL` 或 `pfn` 为 `NULL` 的条目在查表时被跳过(容错)。

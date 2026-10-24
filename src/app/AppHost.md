@@ -55,7 +55,7 @@ INT Run();
 **启动初始化(顺序固定)**: ① 事件绑定表注入 + 预览点击记录器注入 → ② 应用初始化(建立分配器、载入文档、取
 外壳快照) → ③ 文档承载者注入 + 命令层会话回调注入 + 命令面回调接线 → ④ 编辑器初始化(注册回调) → ⑤ 按两枚
 窗口规格建两窗口(框架注册一枚共用窗口类 + 圆角)并挂业务窗口过程 → ⑥ 两窗口各自初始化 D3D11 → ⑦ 两 ImGui
-context + 每个 context 的字体与样式 + Win32 / DX11 后端 → ⑧ 无人值守毫秒数(`GENUI_AUTOCLOSE_MS`)、
+context + 每个 context 的字体与样式 + Win32 / DX11 后端 → ⑧ 无人值守毫秒数(`KANATUI_GENERATE_AUTOCLOSE_MS`)、
 同步提示展示器注入、外壳快照有效性校验。
 
 分配器的装配顺序是装配契约, 由第 ② 步内部完成: `AllocatorHub::Init` → `Layout::SetAllocators` /
@@ -89,7 +89,7 @@ context + 每个 context 的字体与样式 + Win32 / DX11 后端 → ⑧ 无人
 结算, 宿主不另算也不直接移动窗口。圆角优先用 DWM 属性, 不可用时回退区域裁剪, 半径取各自参考尺寸的间隔; 区域
 裁剪在窗口尺寸变化后须按新尺寸重设, DWM 由系统随尺寸保持。
 
-**主循环**: 消息泵(取消息 → 翻译 → 派发; 收到退出消息即置退出标志) → 无人值守(`GENUI_AUTOCLOSE_MS` 大于 `0`
+**主循环**: 消息泵(取消息 → 翻译 → 派发; 收到退出消息即置退出标志) → 无人值守(`KANATUI_GENERATE_AUTOCLOSE_MS` 大于 `0`
 且到达启动后毫秒数 ⇒ 投递退出消息) → 每帧依次: 确保投影配色 → **编辑帧**(该段取得
 渲染目标时按外壳 `WND` 的位置记录结算编辑窗口) → **预览帧**(该段取得渲染目标时按激活布局 `WND`
 的位置记录结算预览窗口) → 切回编辑 context → 排空帧间事件队列。
@@ -139,6 +139,6 @@ ImGui context 的保存与还原在框架过程内部完成, 业务层不触碰 
 | 标头 | `app/AppHost.h`(`src\app\AppHost.h`) |
 | 实现 | `src\app\AppHost.cpp` |
 | 命名空间 | `AppHost`(命名空间级函数, 无实例) |
-| 依赖 | 工程内: `Application`、`PreviewSession`、`FlexHost`、`DocumentIO`、`HostContext`、`GenUIEditor`、`EditorCommands`、`UIEventHandler`、`SelectionOverlay`、`Render`、`Controls`、`ControlSpec`、`CtrlBuffer`、`TextWidth`、`ProjCR`、`AppEnv`、`D3D11Manager`、`FrameEvent`; 系统: `d3d11`、`dwmapi`、`imm32`(输入法上下文)与 ImGui 的 Win32 / DX11 后端 |
+| 依赖 | 工程内: `Application`、`PreviewSession`、`FlexHost`、`DocumentIO`、`HostContext`、`KanatUIGenerateEditor`、`EditorCommands`、`UIEventHandler`、`SelectionOverlay`、`Render`、`Controls`、`ControlSpec`、`CtrlBuffer`、`TextWidth`、`ProjCR`、`AppEnv`、`D3D11Manager`、`FrameEvent`; 系统: `d3d11`、`dwmapi`、`imm32`(输入法上下文)与 ImGui 的 Win32 / DX11 后端 |
 | 平台 | Windows; 圆角优先 DWM 属性, 不可用时回退区域裁剪; 依赖 Direct3D 11 设备与交换链 |
 | 线程安全 | 否(全部宿主状态在宿主线程的消息循环内读写; 帧内消息可能被同步派发, 故 context 逐次保存与还原) |

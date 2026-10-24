@@ -7,7 +7,7 @@
 
 // ================================
 // 命名空间: AppHost
-// 描述: 宿主层的执行入口(进程级单例语义; 与 GenUIEditor / HostContext 同风格)
+// 描述: 宿主层的执行入口(进程级单例语义; 与 KanatUIGenerateEditor / HostContext 同风格)
 // ================================
 namespace AppHost
 {

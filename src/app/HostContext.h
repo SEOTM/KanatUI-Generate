@@ -10,7 +10,7 @@
 
 // ================================
 // 命名空间: HostContext
-// 描述: 宿主能力与窗口句柄的读写(进程级单例语义; 与 GenUIEditor / SelectionOverlay 同风格)
+// 描述: 宿主能力与窗口句柄的读写(进程级单例语义; 与 KanatUIGenerateEditor / SelectionOverlay 同风格)
 // ================================
 namespace HostContext
 {

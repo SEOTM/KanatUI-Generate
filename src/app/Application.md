@@ -67,7 +67,7 @@
 
 | 常量 | 值 | 说明 |
 | --- | --- | --- |
-| `GENUI_SHELL_LAYOUT_NAME` | `"GenUIEditor"` | 编辑窗口外壳布局在布局文档中的保留名; 外壳快照按该名查找。 |
+| `KANATUI_GENERATE_SHELL_LAYOUT_NAME` | `"KanatUIGenerateEditor"` | 编辑窗口外壳布局在布局文档中的保留名; 外壳快照按该名查找。 |
 
 ---
 
@@ -110,19 +110,19 @@ static BOOL Init();
 
 | 级 | 来源 | 形态 |
 | --- | --- | --- |
-| 1 | exe 目录 `.\GenUI.bin`(外部文件) | bin |
-| 2 | exe 目录 `.\GenUI.json`(外部文件) | JSON |
-| 3 | 内置资源 `resource.res\GenUI.bin`(`IDR_GENUI_BIN = 102`) | bin |
-| 4 | 内置资源 `resource.res\GenUI.json`(`IDR_GENUI_JSON = 101`) | JSON |
+| 1 | exe 目录 `.\KanatUIGenerate.bin`(外部文件) | bin |
+| 2 | exe 目录 `.\KanatUIGenerate.json`(外部文件) | JSON |
+| 3 | 内置资源 `resource.res\KanatUIGenerate.bin`(`IDR_KANATUI_GENERATE_BIN = 102`) | bin |
+| 4 | 内置资源 `resource.res\KanatUIGenerate.json`(`IDR_KANATUI_GENERATE_JSON = 101`) | JSON |
 
 级序是口径, 形态由内容决定: 第 1/2 级走路径入口、第 3/4 级走内存入口, 两个入口内部按内容嗅探分派
 (跳过 BOM 与空白后首字节为 `'{'` ⇒ JSON, 否则 bin), 与扩展名无关。命中级载入被拒(校验码 / 版本 /
 段大小 / 超限 / 过短 / 分配失败 / 结构件排布违规)时打印诊断并把该级并入已试掩码, 以剩余级别重新探测;
 探测本体(级序 / 文件名 / 资源 ID / 诊断文案 / 来源结果形状)在 `app\DocumentSource`, 本函数只做逐级回落编排。
-全链无可用来源或全被拒 ⇒ 诊断 + 返回 `FALSE`(不内置代码回退)。构建期可向 exe 目录投放 `.\GenUI.bin`
+全链无可用来源或全被拒 ⇒ 诊断 + 返回 `FALSE`(不内置代码回退)。构建期可向 exe 目录投放 `.\KanatUIGenerate.bin`
 (由工程源生成同源 bin), 此时启动命中第 1 级; 未投放时命中第 2 级 JSON。工程源 JSON 保留, 供只读输入与对账。
 
-**外壳快照**: 与文档同一命中级别, 把保留名 `GENUI_SHELL_LAYOUT_NAME` 的布局解析为独立副本, 驱动编辑窗口内容
+**外壳快照**: 与文档同一命中级别, 把保留名 `KANATUI_GENERATE_SHELL_LAYOUT_NAME` 的布局解析为独立副本, 驱动编辑窗口内容
 (会话内固定, 不随打开其它文档变化)。文件缺失 / 无该名 / 解析失败 ⇒ 快照无效; 本步非致命, 不阻断 `Init`,
 无效性由宿主在启动校验处判定并中止。
 
@@ -1170,7 +1170,7 @@ static Layout* BuildLayoutFromState(
 | --- | --- |
 | 标头 | `app/Application.h`(`src\app\Application.h`) |
 | 实现 | `src\app\Application.cpp` |
-| 命名空间 | 全局(类 `Application`; 文件作用域保留名常量 `GENUI_SHELL_LAYOUT_NAME`) |
+| 命名空间 | 全局(类 `Application`; 文件作用域保留名常量 `KANATUI_GENERATE_SHELL_LAYOUT_NAME`) |
 | 依赖 | 工程内: `AllocatorHub`、`Layout`、`LayoutModel`、`LayoutBuilder`、`Document`、`DocumentSource`、`DocumentIO`、`PreviewSession`、`FlexHost`、`RawAttributes`、`GeometrySolver`、`Controls`、`ResourceLoader`、`HostContext`、`FrameEvent`; 系统: 无额外链接库(仅 Win32 头与 CRT) |
 | 平台 | Windows; 尺寸与指针假设按 64 位构建 |
 | 线程安全 | 否(分配器为静态成员, 全进程一份; 会话状态单线程访问, 跨线程需外部同步) |

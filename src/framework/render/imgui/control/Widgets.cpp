@@ -107,7 +107,7 @@ namespace Controls
 		// 说明: Combo 与 ComboAction 两件共用 ⇒ 展开列表的行高 / 行距 / 文字对齐只有这一处定义
 		static BOOL ComboItems(LPCSTR* lpItems, INT nCount, INT& nIndex);	// 提交项表; 返回 TRUE = 选中索引已改变
 		// 列表行拖拽辅助(定义见文件末尾辅助区)
-		constexpr LPCSTR GENUI_LIST_DRAG_TYPE = "GENUI_LIST_ROW";	// 拖拽 payload 类型串(≤32 字符, 不以 '_' 开头)
+		constexpr LPCSTR KANATUI_GENERATE_LIST_DRAG_TYPE = "KANATUI_GENERATE_LIST_ROW";	// 拖拽 payload 类型串(≤32 字符, 不以 '_' 开头)
 		// 结构: ListRowDragPayload
 		struct ListRowDragPayload
 		{
@@ -1437,7 +1437,7 @@ namespace Controls
 			{
 				ListRowDragPayload payload{};
 				payload.dwRow = dwRow;
-				ImGui::SetDragDropPayload(GENUI_LIST_DRAG_TYPE, &payload, sizeof(payload));
+				ImGui::SetDragDropPayload(KANATUI_GENERATE_LIST_DRAG_TYPE, &payload, sizeof(payload));
 				ImGui::Text(u8"第 %u 行", (unsigned)dwRow);
 				ImGui::EndDragDropSource();
 			}
@@ -1479,7 +1479,7 @@ namespace Controls
 			const ImRect drop = { cur , cur + toImvec2(size) };
 			if (ImGui::BeginDragDropTargetCustom(drop, ImGui::GetID(u8"##LISTROWDROP")))
 			{
-				const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(GENUI_LIST_DRAG_TYPE, ImGuiDragDropFlags_AcceptBeforeDelivery | ImGuiDragDropFlags_AcceptNoDrawDefaultRect);
+				const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(KANATUI_GENERATE_LIST_DRAG_TYPE, ImGuiDragDropFlags_AcceptBeforeDelivery | ImGuiDragDropFlags_AcceptNoDrawDefaultRect);
 				if (payload != NULL && payload->DataSize == (int)sizeof(ListRowDragPayload))
 				{
 					// 状态变量: 源行号取拖拽载荷; 目标行号取本行入参 dwRow —— 二者语义不同,

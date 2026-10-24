@@ -1,12 +1,14 @@
-# GenUI（声明式界面框架与自举设计器）
+# Kanat UI Generate（声明式界面框架与自举设计器）
 
-GenUI 是一个 Windows 原生的声明式界面框架，以及一个用该框架自身实现的界面设计器。界面由一份布局文档（JSON 或二进制 `.bin`）描述：控件类型、标签、文本、事件与四轴几何系数都在文档里，代码里不写界面。设计器负责增删控件、调整几何、打开与保存文档，预览窗口实时呈现被编辑的布局；设计器自身的界面同样是一份 GenUI 布局，因此它是自举的。
+> 曾用名 GenUI。项目现名 Kanat UI Generate，GitHub 仓库为 `KanatUI-Generate`。
+
+Kanat UI Generate 是一个 Windows 原生的声明式界面框架，以及一个用该框架自身实现的界面设计器。界面由一份布局文档（JSON 或二进制 `.bin`）描述：控件类型、标签、文本、事件与四轴几何系数都在文档里，代码里不写界面。设计器负责增删控件、调整几何、打开与保存文档，预览窗口实时呈现被编辑的布局；设计器自身的界面同样是一份 Kanat UI Generate 布局，因此它是自举的。
 
 > GitHub 发布树只保留 `src/` 与 `docs/`（另含本 README 与 `docs/LICENSE.md`）；不附带 CMake、Visual Studio 工程、第三方依赖或预编译产物。用户按 [docs/BUILD.md](docs/BUILD.md) 自行建立工程并准备依赖。
 
 ## 项目沿革
 
-本框架的机制源自其早期应用 [VideoCut](https://github.com/SEOTM/VideoCut)。GenUI 在该框架上反复尝试模块间的耦合方式：断开反向依赖、抽出 `RenderApi` / `CtrlApi` 能力表、按 `base` / `render` / `layout` / `dispatch` 分层归位、剥离应用语义并移除非声明式回退路径。框架机制在 GenUI 阶段基本定型，此后以细节完善（几何、圆角、配色、文本、拖拽、提示）与编辑器能力为主。该框架的最小演示子集随后抽离为 Kanat 项目，GenUI 则是这个框架的自举编辑器应用。
+本框架的机制源自其早期应用 [VideoCut](https://github.com/SEOTM/VideoCut)。Kanat UI Generate 在该框架上反复尝试模块间的耦合方式：断开反向依赖、抽出 `RenderApi` / `CtrlApi` 能力表、按 `base` / `render` / `layout` / `dispatch` 分层归位、剥离应用语义并移除非声明式回退路径。框架机制在 Kanat UI Generate 阶段基本定型，此后以细节完善（几何、圆角、配色、文本、拖拽、提示）与编辑器能力为主。该框架的最小演示子集随后抽离为 Kanat 项目，Kanat UI Generate 则是这个框架的自举编辑器应用。
 
 ## AI 使用
 
@@ -21,7 +23,7 @@ GenUI 是一个 Windows 原生的声明式界面框架，以及一个用该框�
 - **父链三用**：`parent` 字段同时驱动绘制层次、坐标累加与事件委托；`CTRL_EVENT_ENTRUST_PARENT` 把子控件的事件交给父容器。
 - **渲染后端解耦**：布局渲染只依赖 `RenderApi` 与 `CtrlApi` 两张能力表，当前实现是 Dear ImGui + D3D11；替换 UI 技术时提供另一套实现并注入即可，布局与几何代码不改。
 - **22 种控件类型**：其中 18 种有绘制实现，`WND` / `TITLE` / `CNTR` 是结构件，由渲染出口开合窗口与容器。
-- **可自举的编辑器**：编辑窗口由保留名布局 `GenUIEditor` 驱动，无需为设计器另写一套界面代码。
+- **可自举的编辑器**：编辑窗口由保留名布局 `KanatUIGenerateEditor` 驱动，无需为设计器另写一套界面代码。
 - **自包含运行时**：静态链接（`/MT`），只依赖系统自带的 D3D11 / DXGI / DWM。
 
 ## 快速开始
@@ -44,7 +46,7 @@ GenUI 是一个 Windows 原生的声明式界面框架，以及一个用该框�
 3. 配置：C++20、`/MT`（Debug 用 `/MTd`）、Unicode、`/utf-8 /Zc:char8_t-`；
 4. 包含目录：`src`、ImGui 根目录、ImGui `backends`、RapidJSON 的 `include` 目录；
 5. 链接：`d3d11.lib`、`dxgi.lib`、`dwmapi.lib`、`imm32.lib`、`comdlg32.lib`；
-6. 生成后把 [docs/examples/GenUI.json](docs/examples/GenUI.json) 复制到 exe 同目录，命名为 `GenUI.json`。
+6. 生成后把 [docs/examples/KanatUIGenerate.json](docs/examples/KanatUIGenerate.json) 复制到 exe 同目录，命名为 `KanatUIGenerate.json`。
 
 完整的工程属性、命令行 `cl` 示例、可选的资源内嵌与排障见 [docs/BUILD.md](docs/BUILD.md)。
 
@@ -54,14 +56,14 @@ GenUI 是一个 Windows 原生的声明式界面框架，以及一个用该框�
 
 ```powershell
 cd <exe 所在目录>
-.\GenUI.exe
+.\KanatUIGenerate.exe
 ```
 
-启动后会出现两个窗口：预览窗口（被编辑的布局）与编辑窗口（设计器外壳）。`ESC` 或 `Alt+F4` 退出；有未保存改动时先弹出确认。`GENUI_AUTOCLOSE_MS` 可让程序在指定毫秒后自动退出，便于无人值守验证：
+启动后会出现两个窗口：预览窗口（被编辑的布局）与编辑窗口（设计器外壳）。`ESC` 或 `Alt+F4` 退出；有未保存改动时先弹出确认。`KANATUI_GENERATE_AUTOCLOSE_MS` 可让程序在指定毫秒后自动退出，便于无人值守验证：
 
 ```powershell
-$env:GENUI_AUTOCLOSE_MS = 1500
-.\GenUI.exe
+$env:KANATUI_GENERATE_AUTOCLOSE_MS = 1500
+.\KanatUIGenerate.exe
 ```
 
 完整的构建选项与排障见 [docs/BUILD.md](docs/BUILD.md)。
@@ -117,7 +119,7 @@ $env:GENUI_AUTOCLOSE_MS = 1500
 
 ## 设计器
 
-编辑窗口由外壳布局 `GenUIEditor` 声明的五块面板组成：
+编辑窗口由外壳布局 `KanatUIGenerateEditor` 声明的五块面板组成：
 
 | 面板 | 内容 |
 | :--- | :--- |
@@ -138,7 +140,7 @@ main.cpp
        ├─ PreviewSession       预览唯一基座 + 外壳快照 + 帧间同步
        ├─ FlexHost             内嵌(flex)窗口成员
        ├─ DocumentIO / DocumentSource   按路径载入 / 四级启动加载链
-       ├─ GenUIEditor          外壳交互:选中、路径、提示、事件处理
+       ├─ KanatUIGenerateEditor          外壳交互:选中、路径、提示、事件处理
        ├─ EditorCommands       文档编辑命令:增删改移
        └─ LayoutWriter         写方向:中间态 → JSON / bin
 
@@ -161,7 +163,7 @@ LayoutSolver（读方向:JSON / bin → 中间态）
 ## 目录结构
 
 ```text
-GenUI/
+KanatUI-Generate/
 ├─ src/
 │  ├─ main.cpp                  进程入口
 │  ├─ app/                      应用层:宿主、应用单例、文档 I/O、加载链、预览会话、内嵌成员
@@ -173,7 +175,7 @@ GenUI/
 │     ├─ layout/                布局对象、中间态、解析、几何、渲染出口
 │     └─ dispatch/              帧间事件、事件绑定、调度切片、资源路径
 ├─ docs/                        工程文档
-│  └─ examples/GenUI.json       自举布局文档
+│  └─ examples/KanatUIGenerate.json       自举布局文档
 └─ README.md
 ```
 

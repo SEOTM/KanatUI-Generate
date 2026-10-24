@@ -3,7 +3,7 @@
 // 说明: 编辑器命令层 —— 文档编辑命令(增 / 删 / 移)的落点
 //   边界:
 //   - 只承载"编辑命令": 改中间态元素链 / 条目数据; 不含渲染 / 窗口 / 宿主能力 / 会话面状态。
-//   - 文档承载者(doc\Document)经 SetDocument 由宿主注入(时机与铁律见 GenUIEditor::SetDocument 的注释)。
+//   - 文档承载者(doc\Document)经 SetDocument 由宿主注入(时机与铁律见 KanatUIGenerateEditor::SetDocument 的注释)。
 //   - 未注入(pDoc == NULL)⇒ 显式降级: 一律返回 FALSE / NULL, 不制造空态替身
 //     (与 doc\Document 的"纯数据、无策略"定位一致)。
 //   依赖方向: editor → doc / framework / app(仅应用层契约头 SessionContracts.h); 命令层不持会话状态。
@@ -42,7 +42,7 @@ private:
 
 public:
 	// 函数: SetDocument
-	// 描述: 注入文档承载者(宿主启动期经 GenUIEditor::SetDocument 单点转发; NULL = 复位)
+	// 描述: 注入文档承载者(宿主启动期经 KanatUIGenerateEditor::SetDocument 单点转发; NULL = 复位)
 	static VOID SetDocument(Document* pDocument);
 	// 函数: SetSessionHooks
 	// 描述: 注入会话面回调三件套(与承载者注入同点调用; 三者可分别传 NULL ⇒ 该项不驱动)

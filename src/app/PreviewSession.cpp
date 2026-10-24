@@ -348,7 +348,7 @@ VOID PreviewSession::RecalcEntryGeometry(DWORD index)
 // ================================
 
 // 函数: LoadShellSnapshot
-// 描述: 从布局文件解析 name==GenUIEditor 布局为"外壳快照"(编辑窗口渲染源, 会话内固定)
+// 描述: 从布局文件解析 name==KanatUIGenerateEditor 布局为"外壳快照"(编辑窗口渲染源, 会话内固定)
 //       文件缺失/无该名/解析失败均不致命: 快照无效(调用方 main 据此诊断 + 启动中止)
 BOOL PreviewSession::LoadShellSnapshot(LPCSTR path)
 {
@@ -384,7 +384,7 @@ BOOL PreviewSession::LoadShellSnapshotFromMemory(LPVOID pData, DWORD cbData)
 	return BuildShellSnapshotFromSolver(solver);
 }
 // 函数: BuildShellSnapshotFromSolver
-// 描述: 由已解析的布局规格构建外壳快照(取 name==GenUIEditor 的布局)
+// 描述: 由已解析的布局规格构建外壳快照(取 name==KanatUIGenerateEditor 的布局)
 // 说明: 只解析并持有快照条目的规格->布局(与编辑文档条目相互独立, 互不串改)
 BOOL PreviewSession::BuildShellSnapshotFromSolver(LayoutSolver* solver)
 {
@@ -398,13 +398,13 @@ BOOL PreviewSession::BuildShellSnapshotFromSolver(LayoutSolver* solver)
 	// 1. 释放既有快照(重复载入场景)
 	FreeShellSnapshot();
 	dwNum = solver->GetLayoutsCount();
-	// 2. 查找保留名布局 GenUIEditor(并取其中间态布局节点)
+	// 2. 查找保留名布局 KanatUIGenerateEditor(并取其中间态布局节点)
 	{
 		CONST LayoutNode* pNode = NULL;
 		for (DWORD i = 0; i < dwNum; i++)
 		{
 			CONST LayoutInfo* spec = solver->GetLayout(i);
-			if (spec != NULL && lstrcmpA(spec->name, GENUI_SHELL_LAYOUT_NAME) == 0)
+			if (spec != NULL && lstrcmpA(spec->name, KANATUI_GENERATE_SHELL_LAYOUT_NAME) == 0)
 			{
 				pNode = LayoutModel::LayoutAt(solver->GetState(), i);
 				break;
@@ -412,7 +412,7 @@ BOOL PreviewSession::BuildShellSnapshotFromSolver(LayoutSolver* solver)
 		}
 		if (pNode == NULL || pNode->info == NULL)
 		{
-			goto END;		// 无 GenUIEditor: 快照无效
+			goto END;		// 无 KanatUIGenerateEditor: 快照无效
 		}
 		// 3. 构建快照条目(独立 LayoutEntry, 由内存池持有)
 		BufferInfo ebuf = AllocatorHub::GetArena()->Allocate(sizeof(LayoutEntry));
@@ -422,8 +422,8 @@ BOOL PreviewSession::BuildShellSnapshotFromSolver(LayoutSolver* solver)
 		}
 		pNew = (LayoutEntry*)ebuf.buffer;
 		*pNew = LayoutEntry{};		// 零初始化
-		pNew->name = AllocatorHub::CopyString(pNode->info->name[0] ? pNode->info->name : GENUI_SHELL_LAYOUT_NAME);
-		pNew->label = AllocatorHub::CopyString(pNode->info->label[0] ? pNode->info->label : GENUI_SHELL_LAYOUT_NAME);
+		pNew->name = AllocatorHub::CopyString(pNode->info->name[0] ? pNode->info->name : KANATUI_GENERATE_SHELL_LAYOUT_NAME);
+		pNew->label = AllocatorHub::CopyString(pNode->info->label[0] ? pNode->info->label : KANATUI_GENERATE_SHELL_LAYOUT_NAME);
 		pNew->IsMaxiable = pNode->info->IsMaxiable;
 		pNew->IsResizeable = pNode->info->IsResizeable;
 		pNew->refSize = pNode->info->refSize;
@@ -437,14 +437,14 @@ BOOL PreviewSession::BuildShellSnapshotFromSolver(LayoutSolver* solver)
 		}
 		// 注: 几何系数已在中间态元素规格内(ElementSpec 的 x/y/width/height) ⇒ 无需逐枚写入
 		// 4. 窗口像素 = 该布局 autosize 推导(与文档条目/预览窗口同法), 并即时求解全部控件几何 ——
-		//    编辑窗口(hWndEdit)的建窗尺寸即取此值(窗口大小符合 GenUI.json 描述);
+		//    编辑窗口(hWndEdit)的建窗尺寸即取此值(窗口大小符合 KanatUIGenerate.json 描述);
 		//    建窗后 SetShellClientSize 再按实际客户区幂等校正(WS_POPUP 无边框, 二者一致)
 		Application::BuildEntryRef(*pNew);
 		Application::ApplyEntryGeometry(*pNew);
 	}
 	pShell = pNew;
 	bShellValid = TRUE;
-	printf("[APP] 外壳快照: GenUIEditor 已载入 (布局=%s 控件=%zu)\n",
+	printf("[APP] 外壳快照: KanatUIGenerateEditor 已载入 (布局=%s 控件=%zu)\n",
 		pShell->name, pShell->layout->GetTotalNum());
 	// 内嵌(flex)窗口成员: 由同一份外壳源装配(与外壳快照同源同生命周期; 会话级固定)
 	// ⇒ 不随被编辑文档的切换 / 新建变化; 装配后默认非活动 —— 按需显示(SetFlexActive)。
@@ -497,8 +497,8 @@ LayoutEntry* PreviewSession::GetShellEntry()
 	return pShell;
 }
 // 函数: GetShellValid
-// 描述: 外壳快照是否有效(GenUI.json 载入且含 GenUIEditor 布局)
-// 注意: 判据只看"已成功解析出 GenUIEditor 布局", 与几何是否已求解(SetShellClientSize)无关
+// 描述: 外壳快照是否有效(KanatUIGenerate.json 载入且含 KanatUIGenerateEditor 布局)
+// 注意: 判据只看"已成功解析出 KanatUIGenerateEditor 布局", 与几何是否已求解(SetShellClientSize)无关
 BOOL PreviewSession::GetShellValid()
 {
 	BOOL bRet = FALSE;
@@ -544,7 +544,7 @@ CONST RefSize& PreviewSession::GetShellRefSize()
 // 函数: GetShellWndRect
 // 描述: 取外壳快照布局的窗口矩形(尺寸 = 该布局 autosize 推导)
 // 说明: 与 GetDocWndRect(预览窗口)同法 —— 宿主 main 据此创建编辑窗口;
-//       快照无效(文件无 GenUIEditor)时返回 FALSE, 由调用方兜底
+//       快照无效(文件无 KanatUIGenerateEditor)时返回 FALSE, 由调用方兜底
 BOOL PreviewSession::GetShellWndRect(LONG* x, LONG* y, DWORD* w, DWORD* h)
 {
 	BOOL bRet = FALSE;
@@ -560,7 +560,7 @@ BOOL PreviewSession::GetShellWndRect(LONG* x, LONG* y, DWORD* w, DWORD* h)
 }
 // 函数: SetShellClientSize
 // 描述: 编辑窗口建窗后调用: 以实际客户区像素重建外壳 ref 并重算外壳布局几何
-// 说明: 窗口尺寸来源 = 该布局 autosize(GenUI.json 描述), 本函数为"按实际客户区校正"一步
+// 说明: 窗口尺寸来源 = 该布局 autosize(KanatUIGenerate.json 描述), 本函数为"按实际客户区校正"一步
 //       (WS_POPUP 无边框 ⇒ 与建窗尺寸相同, 幂等); 系统夹取/DPI 致二者不等时以实际客户区为准
 VOID PreviewSession::SetShellClientSize(LONG width, LONG height)
 {

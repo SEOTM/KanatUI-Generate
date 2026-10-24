@@ -1,6 +1,6 @@
 # 派生新应用
 
-GenUI 同时是"框架"和"用框架做的设计器"。派生有两种口径：只要框架，或连编辑器一起拿走再改。
+Kanat UI Generate 同时是"框架"和"用框架做的设计器"。派生有两种口径：只要框架，或连编辑器一起拿走再改。
 
 ## 1. 只要框架
 
@@ -30,11 +30,11 @@ framework/
 | 项 | 位置 | 说明 |
 | :--- | :--- | :--- |
 | 应用名 | 工程属性、窗口标题、`docs/examples/*.json` 的 `label` | 显示用 |
-| 文档文件名 | `app/Application.cpp` 的加载链、`app/DocumentSource.cpp` | 默认 `GenUI.bin` / `GenUI.json`，可换成自己的名字 |
-| 外壳布局保留名 | `app/Application.h` 的 `GENUI_SHELL_LAYOUT_NAME` | 缺省 `GenUIEditor`；文档里必须有同名布局 |
+| 文档文件名 | `app/Application.cpp` 的加载链、`app/DocumentSource.cpp` | 默认 `KanatUIGenerate.bin` / `KanatUIGenerate.json`，可换成自己的名字 |
+| 外壳布局保留名 | `app/Application.h` 的 `KANATUI_GENERATE_SHELL_LAYOUT_NAME` | 缺省 `KanatUIGenerateEditor`；文档里必须有同名布局 |
 | 事件绑定表 | `editor/GenEditor.cpp` 的 `GetEventBindings` | 文档 `event` 名到处理函数的映射 |
 | 内置资源 ID | `app/resource.h` | 101 / 102，类型串 `JSON` / `BIN` |
-| 编辑器界面 | 文档里的 `GenUIEditor` 布局 | 增删控件只改文档，不改代码 |
+| 编辑器界面 | 文档里的 `KanatUIGenerateEditor` 布局 | 增删控件只改文档，不改代码 |
 
 ## 3. 建议改动
 
@@ -48,7 +48,7 @@ framework/
 至少验证：
 
 1. Release 与 Debug 两种配置均 0 警告 0 错误；
-2. 把文档放到 exe 同目录，无人值守启动（`GENUI_AUTOCLOSE_MS`）退出码 0；
+2. 把文档放到 exe 同目录，无人值守启动（`KANATUI_GENERATE_AUTOCLOSE_MS`）退出码 0；
 3. 加载链打印的命中级别符合预期；
 4. 外壳布局缺少时能明确失败，不静默空跑；
 5. 若是编辑器形态：增删控件、改几何、保存后重新打开，界面不漂移。
@@ -63,8 +63,8 @@ framework/
 
 | 现象 | 原因 |
 | :--- | :--- |
-| 启动即退出，退出码 1 | 文档里没有 `GENUI_SHELL_LAYOUT_NAME` 对应的布局 |
+| 启动即退出，退出码 1 | 文档里没有 `KANATUI_GENERATE_SHELL_LAYOUT_NAME` 对应的布局 |
 | 界面一片空白 | 内容控件没有 `parent` 指向容器，或容器高度系数算成 0 |
 | 控件点不动 | `event` 名没有出现在绑定表里 |
-| 改 JSON 无效 | exe 同目录存在旧 `GenUI.bin`，加载链优先 bin |
+| 改 JSON 无效 | exe 同目录存在旧 `KanatUIGenerate.bin`，加载链优先 bin |
 | 派生后文档读不出 | 仍按旧文件名探测加载链，但磁盘上放的是新名字 |

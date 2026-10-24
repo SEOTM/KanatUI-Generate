@@ -263,7 +263,7 @@ BOOL DocumentIO::BuildDocumentFromSolver(LayoutSolver* solver)
 		pfnEnsureBase();	// 会话面: 取 / 建预览唯一基座
 	}
 	// 4-ter. 预览选中态表达件在链外(编辑器自持, 见 editor\SelectionOverlay) ⇒ 文档整体替换时
-	//        应用层无须清理任何附加件(编辑器侧选中索引由它自己的有效性校验收敛; GenUIEditor::Update 第 1 步)
+	//        应用层无须清理任何附加件(编辑器侧选中索引由它自己的有效性校验收敛; KanatUIGenerateEditor::Update 第 1 步)
 	// 5. 依客户区重建每个布局 ref; active 条目的控件内容由 SyncPreviewLayout 装配
 	for (DWORD i = 0; i < pDoc->dwEntries; i++)
 	{
@@ -361,10 +361,10 @@ BOOL DocumentIO::SaveDocument(LPCSTR path)
 	{
 		return bRet;
 	}
-	// 工程源保护: 仅当当前文档来自 .\GenUI.json / .\GenUI.bin 加载路径时, 保护该文件
+	// 工程源保护: 仅当当前文档来自 .\KanatUIGenerate.json / .\KanatUIGenerate.bin 加载路径时, 保护该文件
 	if (IsProtectedSavePath(path))
 	{
-		printf("[APP] 保存被拒: 当前文档来自工程源文档(exe 目录 GenUI.json / GenUI.bin), 该文件受保护(只读输入)\n");
+		printf("[APP] 保存被拒: 当前文档来自工程源文档(exe 目录 KanatUIGenerate.json / KanatUIGenerate.bin), 该文件受保护(只读输入)\n");
 		return bRet;
 	}
 	if (IsBinSavePath(path))
@@ -384,7 +384,7 @@ BOOL DocumentIO::SaveDocument(LPCSTR path)
 }
 
 // 函数: IsEngineSourcePath
-// 描述: 判断给定路径是否指向"工程源文档"(exe 目录 GenUI.json / GenUI.bin; 相对路径/大小写不敏感)
+// 描述: 判断给定路径是否指向"工程源文档"(exe 目录 KanatUIGenerate.json / KanatUIGenerate.bin; 相对路径/大小写不敏感)
 // 说明: 两个文件名都是启动加载链的 exe 目录级来源(第 1/2 级)⇒ 同为"工程源只读输入"候选
 // 参数:
 //		IN	path:	待判断路径
@@ -392,8 +392,8 @@ BOOL DocumentIO::SaveDocument(LPCSTR path)
 //		BOOL: TRUE = 是工程源文档路径
 BOOL DocumentIO::IsEngineSourcePath(LPCSTR path)
 {
-	return IsSameFilePath(path, ResourceLoader::GetFilePath("GenUI.json")) ||
-		IsSameFilePath(path, ResourceLoader::GetFilePath("GenUI.bin"));
+	return IsSameFilePath(path, ResourceLoader::GetFilePath("KanatUIGenerate.json")) ||
+		IsSameFilePath(path, ResourceLoader::GetFilePath("KanatUIGenerate.bin"));
 }
 
 // 函数: IsProtectedSavePath

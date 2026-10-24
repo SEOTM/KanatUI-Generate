@@ -15,7 +15,7 @@
 // 说明: JSON 规范排版 = 2 空格缩进 / LF 换行 / 末尾换行 / 无 BOM / 因子对象单行 /
 //       整值不带小数点(其余取最短往返十进制) / 字符串按 UTF-8 字节原样(中文不转义);
 //       写出的键序固定(布局: name label IsMaxiable IsResizeable wndX wndY width height autosize ctrls;
-//       控件: id parent type label text event x y width height), 与工程源 GenUI.json 逐字节一致。
+//       控件: id parent type label text event x y width height), 与工程源 KanatUIGenerate.json 逐字节一致。
 // ================================
 class LayoutWriter
 {
