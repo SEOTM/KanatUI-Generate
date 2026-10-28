@@ -149,14 +149,15 @@
 | 选择 | `CTRL_TYPE_BUTTON` | 按钮 |
 | 选择 | `CTRL_TYPE_CHECKBOX` | 复选框 |
 | 选择 | `CTRL_TYPE_SLIDER` | 单手柄滑动条 |
+| 选择 | `CTRL_TYPE_SLIDER_RANGE` | 双手柄范围滑动条（区间 + 值域，左右手柄分别回传） |
 | 选择 | `CTRL_TYPE_COMBO` | 下拉框 |
 | 选择 | `CTRL_TYPE_COMBO_ACTION` | 下拉动作：下拉框 + 右侧按钮（复合控件） |
 | 选择 | `CTRL_TYPE_PROG` | 进度显示 |
-| 选择 | `CTRL_TYPE_TIMEBAR` | 时间条（起止时码） |
+| 选择 | `CTRL_TYPE_TIMEBAR` | 可编辑时间条（提示文本 + 时 / 分 / 秒 / 毫秒四段输入） |
 | 列表 | `CTRL_TYPE_LIST` | 列表域（类型已登记，暂无绘制实现） |
 | 列表 | `CTRL_TYPE_LIST_INPUT` | 布局列表：行内是输入动作块，支持行编辑与拖拽重排 |
 | 列表 | `CTRL_TYPE_LIST_COMBO` | 控件列表：行内是只读输入动作块，特殊行是下拉动作块 |
-| 列表 | `CTRL_TYPE_LIST_TIMESPAN` | 时段列表（类型已登记，暂无绘制实现） |
+| 列表 | `CTRL_TYPE_LIST_TIMESPAN` | 时间片列表：行显示起止时码，行内删除钮、行选中与滚轮翻动 |
 
 `CTRL_TYPE_INVALID` 与 `CTRL_TYPE_UNKNOWN` 是哨兵，不是可声明类型；文档写 `INVALID` 会被当作未知类型占位。
 

@@ -74,6 +74,7 @@ static DWORD dwResizeLastH = 0;						// 最近一次调整后的客户区高(尺
 static StyleDesc styleDesc{};						// 已登记的宿主样式(调度层经 ApplyStyle 登记)
 static BOOL bStyleDescSet = FALSE;					// 宿主样式是否已登记(未登记 ⇒ 只用亮暗基础样式)
 static FLOAT fWndFontSize = 0.0f;					// 已登记的建面字号(像素; 0 = 未登记 ⇒ Start 用缺省字号)
+static HICON sAppIcon = NULL;						// 已登记的应用窗口图标(建窗与窗口类注册时消费)
 static HostApi HostTable{};							// 宿主接口表(Register 填充; 进程级静态)
 
 // ================================
@@ -163,6 +164,9 @@ CONST HostApi* ImGuiHost::Register()
 	HostTable.GetWndRect = &ImGuiHost::GetWndRect;
 	HostTable.GetRenderStats = &ImGuiHost::GetRenderStats;
 	HostTable.GetResizeStats = &ImGuiHost::GetResizeStats;
+	HostTable.SetAppIcon = &ImGuiHost::SetAppIcon;
+	HostTable.GetNativeDevice = &ImGuiHost::GetNativeDevice;
+	HostTable.GetNativeDeviceContext = &ImGuiHost::GetNativeDeviceContext;
 	return &HostTable;
 }
 
@@ -383,6 +387,27 @@ VOID ImGuiHost::SetFontSize(FLOAT fFontSize)
 	fWndFontSize = fFontSize;
 }
 
+// 函数: SetAppIcon
+// 描述: 登记应用窗口图标(建窗前调用; 传 NULL 清除)
+VOID ImGuiHost::SetAppIcon(VOID* hIcon)
+{
+	sAppIcon = (HICON)hIcon;
+}
+
+// 函数: GetNativeDevice
+// 描述: 取首个标准窗口的 D3D11 设备(渲染设施未就绪时返回 NULL)
+VOID* ImGuiHost::GetNativeDevice()
+{
+	return (VOID*)Units[0].d3d.GetDevice();
+}
+
+// 函数: GetNativeDeviceContext
+// 描述: 取首个标准窗口的 D3D11 设备上下文(渲染设施未就绪时返回 NULL)
+VOID* ImGuiHost::GetNativeDeviceContext()
+{
+	return (VOID*)Units[0].d3d.GetDeviceContext();
+}
+
 // 函数: SetDarkMode
 // 描述: 设置亮暗基础样式(入参归一化为真/假; 已就绪窗口立即刷新)
 VOID ImGuiHost::SetDarkMode(BOOL bDark)
@@ -438,7 +463,7 @@ BOOL ImGuiHost::CreateWnds(CONST WndSpec* pSpecs)
 	// 1. 共用窗口类只注册一次(类 DC; 无游标 / 背景 / 菜单 —— 外观全由控件库自绘)
 	{
 		WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_CLASSDC, HostWndProc, 0L, 0L,
-			hInstance, NULL, NULL, NULL, NULL, pSpecs[0].lpszClassName, NULL };
+			hInstance, sAppIcon, NULL, NULL, NULL, pSpecs[0].lpszClassName, sAppIcon };
 		atomSharedClass = RegisterClassEx(&wc);
 		if (atomSharedClass == 0)
 		{
@@ -464,6 +489,12 @@ BOOL ImGuiHost::CreateWnds(CONST WndSpec* pSpecs)
 		if (unit.hWnd == NULL)
 		{
 			goto CREATE_CLN;
+		}
+		// 2-bis. 应用图标: 窗口类已带图标, 建窗后再显式发一次 WM_SETICON(大 / 小两档)
+		if (sAppIcon != NULL)
+		{
+			SendMessageW(unit.hWnd, WM_SETICON, ICON_BIG, (LPARAM)sAppIcon);
+			SendMessageW(unit.hWnd, WM_SETICON, ICON_SMALL, (LPARAM)sAppIcon);
 		}
 		// 3. 窗口圆角: 优先 DWM, 不可用时回退 RGN(半径 = 规格传入的设计间隔)
 		//    说明: 由本模块统一施加 ⇒ 宿主不必持有窗口句柄; 尺寸变化后按新尺寸重设(见 WM_SIZE)

@@ -68,7 +68,7 @@
 
 | 常量 | 值 | 说明 |
 | --- | --- | --- |
-| `CTRL_TYPE_TABLE` / `CtrlTypeNames` | 编译期展开(24 行类型表) | 类型身份的单一真源:同一份表同时生成枚举、"枚举 → 字符串名"表与行数断言。 |
+| `CTRL_TYPE_TABLE` / `CtrlTypeNames` | 编译期展开(25 行类型表) | 类型身份的单一真源:同一份表同时生成枚举、"枚举 → 字符串名"表与行数断言。 |
 | `CTRL_EVENT_ENTRUST_PARENT` | `"CTRL_EVENT_ENTRUST_PARENT"` | 事件字段的特殊值:把本控件的事件绑定至父容器的事件。 |
 | `PROJ_LAYER_*` | `8` / `1` / `16` | 投影层号的基准档与上下限(背景层 / 下限 / 上限)。 |
 | `OPER_SEG_MASK_*` / `OPER_NONE` | `0xFFFF` / `0xFFFF0000` / `0xFFFFFFFF00000000` / `0x0` | 三段的整字掩码与整字空值。 |
@@ -825,6 +825,7 @@ enum CtrlType
     CTRL_TYPE_INVALID = 0,
     ...
     CTRL_TYPE_LIST_TIMESPAN = 23,
+    CTRL_TYPE_SLIDER_RANGE = 24,
     CTRL_TYPE_COUNT
 };
 ```
@@ -849,15 +850,16 @@ enum CtrlType
 | `CTRL_TYPE_LIST` | `13` | 列表(无缓冲语义、无绘制实现 ⇒ 有控件、无像素)。 |
 | `CTRL_TYPE_LIST_INPUT` | `14` | 布局列表:行 = 可编辑输入动作行。 |
 | `CTRL_TYPE_LIST_COMBO` | `15` | 控件列表:项目行只读,特殊行 = 下拉动作。 |
-| `CTRL_TYPE_TIMEBAR` | `16` | 时间条:无缓冲语义,缓冲缺失时按 `0` 值绘制。 |
+| `CTRL_TYPE_TIMEBAR` | `16` | 可编辑时间条(提示文本 + 时 / 分 / 秒 / 毫秒四段输入),缓冲为 `CtrlTimeBarData`。 |
 | `CTRL_TYPE_RENDER` | `17` | 渲染面:纹理由宿主注入,无图时画占位面。 |
 | `CTRL_TYPE_SLIDER` | `18` | 单手柄滑动条(一个值 + 一个值域)。 |
 | `CTRL_TYPE_COMBO` | `19` | 下拉框。 |
 | `CTRL_TYPE_COMBO_ACTION` | `20` | 下拉动作:左段下拉 + 右段按钮(复合控件)。 |
 | `CTRL_TYPE_PROG` | `21` | 进度状态显示。 |
 | `CTRL_TYPE_CHECKBOX` | `22` | 复选框(原生复选框 + 内联显示文字)。 |
-| `CTRL_TYPE_LIST_TIMESPAN` | `23` | 列表型时间跨度:已登记但既无缓冲语义也无绘制实现 ⇒ 有控件、无像素。 |
-| `CTRL_TYPE_COUNT` | `24` | 类型总数,**枚举哨兵,不是合法类型**。 |
+| `CTRL_TYPE_LIST_TIMESPAN` | `23` | 时间片列表:行块为 `TimeSpanItem`,行显示 / 删除 / 选中 / 滚轮。 |
+| `CTRL_TYPE_SLIDER_RANGE` | `24` | 双手柄范围滑动条(区间 + 值域,左右手柄分别回传)。 |
+| `CTRL_TYPE_COUNT` | `25` | 类型总数,**枚举哨兵,不是合法类型**。 |
 
 ### 注解
 
@@ -1127,6 +1129,7 @@ struct ListBuffer
     DWORD dwCount;
     DWORD dwCapacity;
     DWORD cbItem;
+    DWORD dwTop;
     // 尾随区:行数据区
 };
 ```
@@ -1139,6 +1142,7 @@ struct ListBuffer
 | `dwCount` | 当前项目数量;超过 `dwCapacity` 时消费方按容量截断。 |
 | `dwCapacity` | 项目容量(可容纳的项目块个数);装配期写入,供事件处理器与渲染端校验。 |
 | `cbItem` | 每行数据长度(**自描述**);行数据区按该字节数步进,渲染端不假定行长常量。 |
+| `dwTop` | 首个可见行号(滚轮翻动);渲染端按可见行数与总数自行夹取。 |
 | (尾随区) | 行数据区:`[特殊行数据块 cbItem] + [项目数据块 cbItem × dwCapacity]`,紧随本结构之后。 |
 
 ### 注解
@@ -1164,14 +1168,15 @@ struct ListBuffer
 #define CTRL_TYPE_TABLE(ENTRY)                 \
     ENTRY(CTRL_TYPE_INVALID,       "CTRL_TYPE_INVALID")       \
     ...                                        \
-    ENTRY(CTRL_TYPE_LIST_TIMESPAN, "CTRL_TYPE_LIST_TIMESPAN")
+    ENTRY(CTRL_TYPE_LIST_TIMESPAN, "CTRL_TYPE_LIST_TIMESPAN")   \
+    ENTRY(CTRL_TYPE_SLIDER_RANGE,  "CTRL_TYPE_SLIDER_RANGE")
 
 inline constexpr LPCSTR CtrlTypeNames[] = { /* 由同一张表展开 */ };
 ```
 
 ### 值
 
-编译期展开:表共 **24 行** = 22 个可用类型 + `UNKNOWN` + `INVALID`,每行形态
+编译期展开:表共 **25 行** = 23 个可用类型 + `UNKNOWN` + `INVALID`,每行形态
 `ENTRY(枚举名, 字符串名)`。
 
 ### 注解
@@ -1581,6 +1586,51 @@ constexpr DWORD LIST_SPECIAL_LAST = 1;
 
 `LIST_SEL_NONE` 是"未选中"的哨兵值,与"选中第 0 项"不同 ⇒ 消费者须先与本值比较再取索引。
 
+
+---
+
+## ImmedState::StateBit 枚举 (ImmedState)
+
+即时状态位:把 ImGui 的逐项查询结果收拢成一组状态位,供控件层与部件层共用。
+
+### 语法
+
+```cpp
+enum StateBit :uint32_t
+{
+    IMMED_STATE_BASE = 0,
+    IMMED_STATE_HOVERED = 1 << 0,
+    IMMED_STATE_FOCUSED = 1 << 1,
+    IMMED_STATE_ACTIVE = 1 << 2,
+    IMMED_STATE_EDITED = 1 << 3,
+    IMMED_STATE_SUBMITTED = 1 << 4,
+    IMMED_STATE_DRAGGING = 1 << 5,
+    IMMED_STATE_DISABLED = 1 << 6,
+    IMMED_STATE_DEACTIVATED = 1 << 7,
+    IMMED_STATE_CLICK_COMPLETED = IMMED_STATE_DEACTIVATED | IMMED_STATE_HOVERED,
+};
+```
+
+### 成员
+
+| 枚举值 | 值 | 说明 |
+| --- | --- | --- |
+| `IMMED_STATE_BASE` | `0` | 无任何状态。 |
+| `IMMED_STATE_HOVERED` | `1` | 悬停。 |
+| `IMMED_STATE_FOCUSED` | `2` | 持有焦点。 |
+| `IMMED_STATE_ACTIVE` | `4` | 激活(按下)。 |
+| `IMMED_STATE_EDITED` | `8` | 本帧被编辑。 |
+| `IMMED_STATE_SUBMITTED` | `16` | 编辑后失活(提交)。 |
+| `IMMED_STATE_DRAGGING` | `32` | 拖动中。 |
+| `IMMED_STATE_DISABLED` | `64` | 禁用。 |
+| `IMMED_STATE_DEACTIVATED` | `128` | 本帧释放激活态。 |
+| `IMMED_STATE_CLICK_COMPLETED` | `128 \| 1` | 组合状态:失活且仍悬停 = 完整单击。 |
+
+### 注解
+
+`State` 是状态位的值语义容器,提供置位 / 清除 / 重置与谓词(`With` / `Without` / `Is` / `IsNot`
+以及 `IsHovered` 等逐位快捷判定);它表达"本帧发生了什么",而 `WidgetState` 只用于取色的三态 + 禁用。
+两者的桥接由部件层的 `CollectImmedState` 完成(逐项查询后写入状态)。
 
 ---
 

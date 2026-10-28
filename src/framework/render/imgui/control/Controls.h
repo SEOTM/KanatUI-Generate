@@ -79,10 +79,15 @@ namespace Controls
 	//       (绘制经部件 Widgets::Base::ComboAction)
 	VOID ComboAction(CtrlInfo* info);
 	// 函数: TimeBar
-	// 描述: 时间条控件(TIMEBAR): 显示 起点 - 终点 的时码(时:分:秒.毫秒); 数据取控件缓冲
-	//       (两枚 int64: 起点毫秒 / 终点毫秒), 绘制经部件
-	//       Widgets::Base::TimeSpan(自绘圆角底 + 文本); 本件无交互项、不产出操作码
+	// 描述: 可编辑时间条控件(TIMEBAR): 提示文本 + 时:分:秒.毫秒四段数字输入; 数据取控件缓冲
+	//       (CtrlTimeBarData), 提交时派发专属段编辑提交码
 	VOID TimeBar(CtrlInfo* info);
+	// 函数: SliderRange
+	// 描述: 双手柄范围滑块控件(SLIDER_RANGE): 左/右手柄分别派发专属段与编辑变更码
+	VOID SliderRange(CtrlInfo* info);
+	// 函数: ListTimeSpan
+	// 描述: 时间片列表控件(LIST_TIMESPAN): 逐行显示起止时码, 行内删除钮与行选中经操作码回传
+	VOID ListTimeSpan(CtrlInfo* info);
 	// 函数: ListRowDropOper
 	// 描述: 列表行拖拽落点 → 行件返回约定(纯换算, 不触碰 ImGui; 绘制侧唯一真源)
 	int64_t ListRowDropOper(DWORD dwSrc, DWORD dwRow, BOOL IsAfter);

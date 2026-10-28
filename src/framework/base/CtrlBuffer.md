@@ -44,6 +44,9 @@ C 运行时,**不依赖任何上层**(render / layout / dispatch),也不含任�
 | `CtrlRenderData` | 渲染面控件缓冲结构(纹理视图 + 像素尺寸,类型擦除)。 |
 | `CtrlCheckData` | 复选框控件缓冲结构(勾选态 + 内联显示文字)。 |
 | `CtrlSliderData` | 滑动条控件缓冲结构(手柄当前值 + 值域)。 |
+| `CtrlSliderRangeData` | 双手柄范围滑动条缓冲结构(当前区间 + 值域)。 |
+| `TimeSpanItem` | 时间片列表的行块(起止毫秒)。 |
+| `CtrlTimeBarData` | 可编辑时间条缓冲结构(提示文本 + 当前毫秒 + 上限毫秒)。 |
 | `CtrlTextRange` | 文本通道的取址结果(首址 + 容量)。 |
 
 ### 常量
@@ -56,6 +59,7 @@ C 运行时,**不依赖任何上层**(render / layout / dispatch),也不含任�
 | `CTRL_INPUT_ACTION_ACTION` | `64` | 输入动作控件载荷内按钮文本区的字节数(含结尾 `\0`)。 |
 | `CTRL_INPUT_ACTION_SPLIT` | `64` | 载荷内按钮文本区与输入文本区的分割位置(8 字节对齐)。 |
 | `CTRL_INPUT_ACTION_BUF` | 编译期算出(`sizeof(CtrlInputActionData) + 64 + 256`) | 输入动作控件的缓冲总字节数。 |
+| `LIST_TIMESPAN_CAPACITY` | `128` | 时间片列表的行容量(行块 `TimeSpanItem`)。 |
 | `CTRL_DEFAULT_ACTION_BTN` | `u8"动作"` | 下拉动作控件右段按钮的缺省文案。 |
 | `CTRL_DEFAULT_BROWSE_BTN` | `u8"浏览"` | 输入动作控件按钮文本区的缺省文案。 |
 | `CTRL_DEFAULT_COMBO_ITEM` | `u8"选项 1"` | 下拉类控件未获选项文本时的缺省选项。 |
@@ -420,6 +424,93 @@ struct CtrlSliderData
 
 ---
 
+## CtrlSliderRangeData 结构 (全局)
+
+双手柄范围滑动条缓冲结构。
+
+### 语法
+
+```cpp
+struct CtrlSliderRangeData
+{
+    int64_t vMin;
+    int64_t vMax;
+    int64_t lMin;
+    int64_t lMax;
+};
+```
+
+### 成员
+
+| 成员 | 说明 |
+| :--- | :--- |
+| `vMin` | 左手柄当前值(不大于 `vMax` 由绘制端钳制)。 |
+| `vMax` | 右手柄当前值(不小于 `vMin` 由绘制端钳制)。 |
+| `lMin` | 值域下限,装配期初值 `0`。 |
+| `lMax` | 值域上限,装配期初值 `100`。 |
+
+### 注解
+
+语义 = "一个区间 + 一个值域";左右手柄分别回传操作码,拖动时按鼠标与两柄的远近选定当前手柄。
+
+---
+
+## TimeSpanItem 结构 (全局)
+
+时间片列表的一行。
+
+### 语法
+
+```cpp
+struct TimeSpanItem
+{
+    int64_t startMs;
+    int64_t endMs;
+};
+```
+
+### 成员
+
+| 成员 | 说明 |
+| :--- | :--- |
+| `startMs` | 起点(毫秒)。 |
+| `endMs` | 终点(毫秒)。 |
+
+### 注解
+
+行块由应用写入、渲染端只读;列表容量与行长写入 `ListBuffer` 头(`dwCapacity` / `cbItem`)。
+
+---
+
+## CtrlTimeBarData 结构 (全局)
+
+可编辑时间条的缓冲。
+
+### 语法
+
+```cpp
+struct CtrlTimeBarData
+{
+    CHAR szHint[CTRL_LABEL_BUF];
+    int64_t valueMs;
+    int64_t limitMs;
+};
+```
+
+### 成员
+
+| 成员 | 说明 |
+| :--- | :--- |
+| `szHint` | 提示文本;装配期由布局文本复制。 |
+| `valueMs` | 当前时间(毫秒);绘制时拆分四段,任一段变更即写回。 |
+| `limitMs` | 上限(毫秒;不大于 `0` 表示不限)。 |
+
+### 注解
+
+时码四段(时 / 分 / 秒 / 毫秒)由控件按 `valueMs` 拆分与合成;写回值按 `limitMs` 钳制。
+
+---
+
 ## CtrlTextRange 结构 (全局)
 
 文本通道的取址结果。
@@ -690,10 +781,14 @@ BOOL PrepareCtrlBuffer(
 
 ### 注解
 
-分派顺序(自上而下,先特例后分组):不建缓冲的类型(未知 / 未使用槽位 / `LIST` / `TIMEBAR` /
-`LIST_TIMESPAN`)→ `INPUT_ACTION`(定长头 + 按钮文本区 + 输入文本区)→ `CHECKBOX`(勾选态 + 显示文字)→
+分派顺序(自上而下,先特例后分组):不建缓冲的类型(未知 / 未使用槽位 / `LIST`)→
+`LIST_TIMESPAN`(`ListBuffer` 头 + `TimeSpanItem` 行块 × `LIST_TIMESPAN_CAPACITY`)→
+`INPUT_ACTION`(定长头 + 按钮文本区 + 输入文本区)→ `CHECKBOX`(勾选态 + 显示文字)→
 `INPUT_MULTI`(4096 字节,长文本)→ 文本类(`CTRL_TEXT_BUF`)→ 列表类(`ListBuffer` 头 + 特殊行块 +
-项目块 × 容量)→ 其余定长结构(`INPUT_REAL` / `INPUT_NUMERIC` / `COMBO*` / `SLIDER` / `PROG` / `RENDER`)→ 兜底失败。
+项目块 × 容量)→ 其余定长结构(`INPUT_REAL` / `INPUT_NUMERIC` / `COMBO*` / `SLIDER` / `SLIDER_RANGE` /
+`TIMEBAR` / `PROG` / `RENDER`)→ 兜底失败。
+
+`TIMEBAR` 的提示文本在装配期从文档文本复制进缓冲的 `szHint`,渲染端只读该字段,不再回看布局文档。
 
 顺序不可随意调整:`INPUT_MULTI` 必须在通用文本类分支之前(否则长文本被 256 字节截断);
 `CHECKBOX` 必须在文本类之前(其文字是结构内字段,不参与文本往返通道)。

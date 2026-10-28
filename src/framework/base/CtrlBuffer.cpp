@@ -43,11 +43,30 @@ namespace CtrlBuffer
 		// 0. 渲染层不认识 / 无缓冲语义的类型: 保留控件对象, 不建缓冲。三类:
 		//    ① 未知类型串(枚举 = CTRL_TYPE_UNKNOWN): 编辑层可感知、渲染层按矩形占位;
 		//    ② 未使用槽位(枚举 = CTRL_TYPE_INVALID): 线性布局器预留, 渲染层不可见;
-		//    ③ 无缓冲语义的类型(LIST/TIMEBAR/LIST_TIMESPAN): 只保留控件对象、不建缓冲。
+		//    ③ 无缓冲语义的类型(LIST): 只保留控件对象、不建缓冲。
 		if (info->IsKnownType() == FALSE ||
-			info->type == CTRL_TYPE_LIST || info->type == CTRL_TYPE_TIMEBAR ||
-			info->type == CTRL_TYPE_LIST_TIMESPAN)
+			info->type == CTRL_TYPE_LIST)
 		{
+			return TRUE;
+		}
+		// 0-0. 时间片列表(LIST_TIMESPAN): 缓冲 = ListBuffer 头 + TimeSpanItem 行块 × 容量;
+		//      容量与行长由本函数写入缓冲头 —— 渲染端只按头部字段工作。
+		if (info->type == CTRL_TYPE_LIST_TIMESPAN)
+		{
+			const DWORD cbItem = (DWORD)sizeof(TimeSpanItem);
+			const DWORD dwCapacity = LIST_TIMESPAN_CAPACITY;
+			const DWORD cbBuffer = (DWORD)(sizeof(ListBuffer) + (size_t)cbItem * dwCapacity);
+			info->bufferInfo = AllocatorHub::AllocSmall(cbBuffer);
+			if (info->bufferInfo.buffer == NULL) { return FALSE; }
+			RtlZeroMemory(info->bufferInfo.buffer, info->bufferInfo.size);
+			{
+				ListBuffer* pList = (ListBuffer*)info->bufferInfo.buffer;
+				pList->dwSelected = LIST_SEL_NONE;
+				pList->dwCount = 0;
+				pList->dwCapacity = dwCapacity;
+				pList->cbItem = cbItem;
+				pList->dwTop = 0;
+			}
 			return TRUE;
 		}
 		// 0-bis. 输入动作控件(INPUT_ACTION): 组合控件缓冲 = 定长头(split) + 按钮文本区 + 输入文本区。
@@ -211,6 +230,36 @@ namespace CtrlBuffer
 			slider->vMin = (text && text[0]) ? atoi(text) : 0;
 			slider->lMin = 0;
 			slider->lMax = 100;
+			return TRUE;
+		}
+		case CTRL_TYPE_SLIDER_RANGE:
+		{
+			// 双手柄范围滑块(见 CtrlBuffer.h 的 CtrlSliderRangeData): 结构缓冲
+			// 初值 = 区间 0 ~ 100(值域同), 由应用按业务语义写入
+			info->bufferInfo = AllocatorHub::AllocSmall(sizeof(CtrlSliderRangeData));
+			if (info->bufferInfo.buffer == NULL) { return FALSE; }
+			RtlZeroMemory(info->bufferInfo.buffer, info->bufferInfo.size);
+			CtrlSliderRangeData* slider = (CtrlSliderRangeData*)info->bufferInfo.buffer;
+			slider->vMin = 0;
+			slider->vMax = 100;
+			slider->lMin = 0;
+			slider->lMax = 100;
+			return TRUE;
+		}
+		case CTRL_TYPE_TIMEBAR:
+		{
+			// 可编辑时间条(见 CtrlBuffer.h 的 CtrlTimeBarData): 提示文本 + 当前毫秒 + 上限毫秒
+			// 提示文本在装配期从文档文本复制; 渲染端只读该字段, 不再回看布局文档
+			info->bufferInfo = AllocatorHub::AllocSmall(sizeof(CtrlTimeBarData));
+			if (info->bufferInfo.buffer == NULL) { return FALSE; }
+			RtlZeroMemory(info->bufferInfo.buffer, info->bufferInfo.size);
+			{
+				CtrlTimeBarData* pBar = (CtrlTimeBarData*)info->bufferInfo.buffer;
+				if (text != NULL && text[0] != '\0')
+				{
+					strcpy_s(pBar->szHint, (size_t)CTRL_LABEL_BUF, text);
+				}
+			}
 			return TRUE;
 		}
 		case CTRL_TYPE_PROG:

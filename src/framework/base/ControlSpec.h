@@ -42,7 +42,8 @@
 	ENTRY(CTRL_TYPE_COMBO_ACTION,  "CTRL_TYPE_COMBO_ACTION")  \
 	ENTRY(CTRL_TYPE_PROG,          "CTRL_TYPE_PROG")           \
 	ENTRY(CTRL_TYPE_CHECKBOX,      "CTRL_TYPE_CHECKBOX")       \
-	ENTRY(CTRL_TYPE_LIST_TIMESPAN, "CTRL_TYPE_LIST_TIMESPAN")
+	ENTRY(CTRL_TYPE_LIST_TIMESPAN, "CTRL_TYPE_LIST_TIMESPAN")   \
+	ENTRY(CTRL_TYPE_SLIDER_RANGE,  "CTRL_TYPE_SLIDER_RANGE")
 
 // 类型: CtrlType
 enum CtrlType
@@ -226,6 +227,7 @@ inline INT32 CtrlLayerStep(CtrlType type)
 	case CTRL_TYPE_COMBO_ACTION:
 	case CTRL_TYPE_RENDER:
 	case CTRL_TYPE_SLIDER:
+	case CTRL_TYPE_SLIDER_RANGE:
 		return (INT32)CTRL_LAYER_STEP_DOWN;
 	// 其余(结构件 / TEXT / TIMEBAR / PROG / UNKNOWN / INVALID): 继承容器层次
 	default:
@@ -304,11 +306,13 @@ inline BOOL CtrlTypeIsRawGraphic(CtrlType type)
 }
 
 // 函数: CtrlTypeHandlesClickItself
-// 描述: 该控件类型是否由控件库自身在点击时派发 OPER_COMMON_CLICKED(⇒ 渲染出口不得再判一次,
-//       否则同一击会被登记两次)
+// 描述: 该控件类型是否由控件库独占其输入项的点击处理(⇒ 渲染出口不得再按通用点击判一次;
+//       本判据既含"点击即派发 CLICKED"的类型, 也含"点击只按自身语义派发提交/变更码"的类型)
 inline BOOL CtrlTypeHandlesClickItself(CtrlType type)
 {
-	return (type == CTRL_TYPE_TEXT || type == CTRL_TYPE_RECT || type == CTRL_TYPE_BUTTON) ? TRUE : FALSE;
+	return ((type == CTRL_TYPE_TEXT) || (type == CTRL_TYPE_RECT) || (type == CTRL_TYPE_BUTTON) ||
+		(type == CTRL_TYPE_LIST_TIMESPAN) || (type == CTRL_TYPE_TIMEBAR) ||
+		(type == CTRL_TYPE_SLIDER_RANGE)) ? TRUE : FALSE;
 }
 
 // 函数: CtrlTypeIsTextKind
@@ -544,12 +548,93 @@ struct ListBuffer
 	DWORD dwCount;		// 项目数量
 	DWORD dwCapacity;	// 项目容量
 	DWORD cbItem;		// 每行数据长度(自描述; 行为端装载期写入, 渲染端按此步进)
+	DWORD dwTop;		// 首个可见行号(滚轮翻动; 渲染端自行夹取)
 	// 行数据区(紧随本结构之后):
 	//     [特殊行数据块 cbItem] + [项目数据块 cbItem × dwCapacity]
-	// 行数据块内容由各类型自己的约定解释(LIST_INPUT = INPUT_ACTION 块; LIST_COMBO = 文本)
+	// 行数据块内容由各类型自己的约定解释(LIST_INPUT = INPUT_ACTION 块; LIST_COMBO = 文本;
+	// LIST_TIMESPAN = TimeSpanItem 块)
 };
 
 // 常量: 列表选中哨兵与特殊行标志
 constexpr DWORD LIST_SEL_NONE = 0xFFFFFFFF;		// 无选中项
 constexpr DWORD LIST_SPECIAL_FIRST = 0;			// 特殊行在前(低 16 位取值)
 constexpr DWORD LIST_SPECIAL_LAST = 1;			// 特殊行在后(低 16 位取值)
+
+// ================================
+// 区域: 即时状态
+// 说明: 把 ImGui 的逐项查询结果收拢成一组状态位 + 判定谓词, 供控件层与部件层共用;
+//       与 WidgetState 的区别是它表达"本帧发生了什么"(含失活 / 编辑 / 提交 / 拖动),
+//       而 WidgetState 只用于取色的三态 + 禁用。
+// ================================
+namespace ImmedState
+{
+	// 类型: StateBit
+	enum StateBit :uint32_t
+	{
+		// 基础状态
+		IMMED_STATE_BASE = 0,
+		IMMED_STATE_HOVERED = 1 << 0,
+		IMMED_STATE_FOCUSED = 1 << 1,
+		IMMED_STATE_ACTIVE = 1 << 2,
+		IMMED_STATE_EDITED = 1 << 3,
+		IMMED_STATE_SUBMITTED = 1 << 4,
+		IMMED_STATE_DRAGGING = 1 << 5,
+		IMMED_STATE_DISABLED = 1 << 6,
+		IMMED_STATE_DEACTIVATED = 1 << 7,
+		// 组合状态
+		IMMED_STATE_CLICK_COMPLETED = IMMED_STATE_DEACTIVATED | IMMED_STATE_HOVERED,
+	};
+
+	static inline StateBit operator|(StateBit s1, StateBit s2) { return (StateBit)((uint32_t)s1 | (uint32_t)s2); }
+	static inline StateBit operator&(StateBit s1, StateBit s2) { return (StateBit)((uint32_t)s1 & (uint32_t)s2); }
+	static inline StateBit operator^(StateBit s1, StateBit s2) { return (StateBit)((uint32_t)s1 ^ (uint32_t)s2); }
+	static inline StateBit operator~(StateBit s) { return (StateBit)~(uint32_t)s; }
+	static inline StateBit& operator|=(StateBit& s1, StateBit s2) { s1 = s1 | s2; return s1; }
+	static inline StateBit& operator&=(StateBit& s1, StateBit s2) { s1 = s1 & s2; return s1; }
+	static inline StateBit& operator^=(StateBit& s1, StateBit s2) { s1 = s1 ^ s2; return s1; }
+	static inline bool operator==(StateBit s1, StateBit s2) { return (uint32_t)s1 == (uint32_t)s2; }
+	static inline bool operator!=(StateBit s1, StateBit s2) { return (uint32_t)s1 != (uint32_t)s2; }
+
+	// 结构: State
+	// 描述: 状态位集合(值语义; 提供置位 / 清除 / 谓词)
+	struct State
+	{
+	private:
+		StateBit state;
+	public:
+		State() :state(IMMED_STATE_BASE) {}
+		State(StateBit s) :state(s) {}
+
+		State& operator=(StateBit s) { state = s; return *this; }
+
+		State operator|(const StateBit s) const { State s2(*this); s2 |= s; return s2; }
+		State operator|(const State s) const { State s2(*this); s2 |= s.state; return s2; }
+		State& operator|=(StateBit s) { state |= s; return *this; }
+
+		State operator&(StateBit s) const { State s2(*this); s2 &= s; return s2; }
+		State operator&(const State s) const { State s2(*this); s2 &= s.state; return s2; }
+		State& operator&=(StateBit s) { state &= s; return *this; }
+
+		State operator^(StateBit s)  const { State s2(*this); s2 ^= s; return s2; }
+		State operator^(const State s) const { State s2(*this); s2 ^= s.state; return s2; }
+		State& operator^=(StateBit s) { state ^= s; return *this; }
+
+		inline bool With(StateBit s) const { return (state & s) != 0; }
+		inline bool Without(StateBit s) const { return (state & s) == 0; }
+		inline bool Is(StateBit s) const { return (state & s) == s; }
+		inline bool IsNot(StateBit s) const { return (state & s) != s; }
+
+		inline bool IsHovered() const { return With(IMMED_STATE_HOVERED); }
+		inline bool IsFocused() const { return With(IMMED_STATE_FOCUSED); }
+		inline bool IsActive() const { return With(IMMED_STATE_ACTIVE); }
+		inline bool IsEdited() const { return With(IMMED_STATE_EDITED); }
+		inline bool IsSubmitted() const { return With(IMMED_STATE_SUBMITTED); }
+		inline bool IsDragging() const { return With(IMMED_STATE_DRAGGING); }
+		inline bool IsDisabled() const { return With(IMMED_STATE_DISABLED); }
+		inline bool IsDeactivated() const { return With(IMMED_STATE_DEACTIVATED); }
+
+		State& Set(StateBit s) { state |= s; return *this; }
+		State& Clear(StateBit s) { state &= ~s; return *this; }
+		State& Reset() { state = IMMED_STATE_BASE; return *this; }
+	};
+}

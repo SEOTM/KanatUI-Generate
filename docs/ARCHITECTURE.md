@@ -150,17 +150,17 @@ ImGui 侧的分工：
 
 ## 8. 控件与部件
 
-控件类型表共 22 种（不含 `INVALID` / `UNKNOWN` 两个非控件哨兵）：
+控件类型表共 23 种（不含 `INVALID` / `UNKNOWN` 两个非控件哨兵）：
 
 | 分组 | 类型 |
 | :--- | :--- |
 | 结构件 | `WND`、`TITLE`、`CNTR` |
 | 文字与图形 | `TEXT`、`RECT`、`RENDER` |
 | 输入 | `INPUT_SINGLE`、`INPUT_MULTI`、`INPUT_NUMERIC`、`INPUT_REAL`、`INPUT_ACTION` |
-| 选择 | `BUTTON`、`CHECKBOX`、`SLIDER`、`COMBO`、`COMBO_ACTION`、`PROG`、`TIMEBAR` |
+| 选择 | `BUTTON`、`CHECKBOX`、`SLIDER`、`SLIDER_RANGE`、`COMBO`、`COMBO_ACTION`、`PROG`、`TIMEBAR` |
 | 列表 | `LIST`、`LIST_INPUT`、`LIST_COMBO`、`LIST_TIMESPAN` |
 
-其中 18 种有绘制实现；`WND` / `CNTR` 是结构件，由渲染出口开合窗口与内容容器，`LIST` / `LIST_TIMESPAN` 在类型表中但暂无绘制实现（按未知类型占位）。类型串由文档给出，未命中即 `UNKNOWN`，按矩形占位绘制。
+其中 20 种有绘制实现；`WND` / `CNTR` 是结构件，由渲染出口开合窗口与内容容器，`LIST` 在类型表中但暂无绘制实现（按未知类型占位）。类型串由文档给出，未命中即 `UNKNOWN`，按矩形占位绘制。
 
 控件缓冲 `CtrlBuffer` 承载控件状态：文本类存 C 字符串并按类型给容量；列表类存 `ListBuffer` 头 + 行数据区；下拉与输入动作有各自的结构。绘制是缓冲的函数，事件只经回调函数执行。
 

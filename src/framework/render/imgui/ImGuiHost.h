@@ -186,6 +186,18 @@ public:
 	// 描述: 销毁全部标准窗口并注销窗口类(幂等)
 	static VOID DestroyWnds();
 
+	// 函数: SetAppIcon
+	// 描述: 登记应用窗口图标(建窗前调用; 传 NULL 清除)
+	static VOID SetAppIcon(VOID* hIcon);
+
+	// 函数: GetNativeDevice
+	// 描述: 取首个标准窗口的 D3D11 设备(渲染设施未就绪时返回 NULL)
+	static VOID* GetNativeDevice();
+
+	// 函数: GetNativeDeviceContext
+	// 描述: 取首个标准窗口的 D3D11 设备上下文(渲染设施未就绪时返回 NULL)
+	static VOID* GetNativeDeviceContext();
+
 	// 函数: GetWindow
 	// 描述: 取指定窗口的窗口句柄(序号越界返回空)
 	static HWND GetWindow(DWORD index);

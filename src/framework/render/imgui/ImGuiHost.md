@@ -59,6 +59,9 @@ UI 宿主:纯静态类(构造、析构、拷贝均删除), 无实例 ⇒ 进程�
 | `GetResizeStats` | 取窗口尺寸调整自证计数与最近一次调整后的客户区尺寸。 |
 | `Release` | 释放全部窗口的 ImGui 面与 D3D11 设施; 幂等且不动窗口。 |
 | `DestroyWnds` | 销毁全部标准窗口并注销窗口类; 幂等。 |
+| `SetAppIcon` | 登记应用窗口图标; 建窗与窗口类注册时消费。 |
+| `GetNativeDevice` | 取首个标准窗口的 D3D11 设备; 渲染设施未就绪返回 `NULL`。 |
+| `GetNativeDeviceContext` | 取首个标准窗口的 D3D11 设备上下文; 未就绪返回 `NULL`。 |
 | `GetWindow` | 取指定窗口的窗口句柄; 序号越界返回 `NULL`。 |
 | `GetContext` | 取指定窗口的 ImGui 上下文; 序号越界或未就绪返回 `NULL`。 |
 | `IsReady` | 查询指定窗口的 ImGui 面是否已就绪。 |

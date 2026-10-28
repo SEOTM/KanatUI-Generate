@@ -310,10 +310,10 @@ static constexpr CtrlTypeInfo aCtrlTypeInfo[] = {
 	{ CTRL_TYPE_LIST,			u8"列表",		"",			17 },	// 无绘制实现 ⇒ 新增后有控件、无像素(见 Controls.cpp 分派表注释)
 	{ CTRL_TYPE_LIST_INPUT,		u8"输入列表",	"",			10 },	// 行数据由列表缓冲/内容消费者提供
 	{ CTRL_TYPE_LIST_COMBO,		u8"下拉列表",	"",			11 },	// 同上
-	{ CTRL_TYPE_TIMEBAR,		u8"时间条",		"",			18 },	// 无缓冲语义 ⇒ 按 0 值绘制(新增后显示 00:00:00.000 - 00:00:00.000)
+	{ CTRL_TYPE_TIMEBAR,		u8"时间条",		"",			18 },	// 可编辑时间条: 缓冲 CtrlTimeBarData(提示文本 + 当前毫秒 + 上限毫秒)
 	{ CTRL_TYPE_RENDER,			u8"呈现器",		"",			19 },	// 纹理由宿主注入; 无图时画占位面 ⇒ 新增后有像素
 	{ CTRL_TYPE_CHECKBOX,		u8"复选框",		u8"复选框",	15 },
-	{ CTRL_TYPE_LIST_TIMESPAN,	u8"时段列表",	"",			16 },	// 无缓冲语义与绘制实现 ⇒ 新增后有控件、无像素
+	{ CTRL_TYPE_LIST_TIMESPAN,	u8"时段列表",	"",			16 },	// 时间片列表: 缓冲 ListBuffer + TimeSpanItem 行块; 行数据由应用填充
 };
 constexpr size_t CTRL_TYPE_INFO_NUM = sizeof(aCtrlTypeInfo) / sizeof(aCtrlTypeInfo[0]);
 

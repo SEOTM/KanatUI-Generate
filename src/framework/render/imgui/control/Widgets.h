@@ -27,6 +27,10 @@
 // ================================
 namespace Controls
 {
+	// 函数: CollectImmedState
+	// 描述: 把最后一个 ImGui 项的即时状态收拢进 State(见 Widgets.cpp)
+	void CollectImmedState(ImmedState::State& state);
+
 	namespace Widgets
 	{
 		// ================================
@@ -37,10 +41,15 @@ namespace Controls
 			// 类型: WidgetState
 			enum WidgetState : DWORD
 			{
-				WIDGET_STATE_BASE = 0,		// 基础状态(默认)
-				WIDGET_STATE_HOVERED = 1,	// 悬停
+				WIDGET_STATE_BASE = 0,			// 基础状态(默认)
+				WIDGET_STATE_HOVERED = 1,		// 悬停
 				WIDGET_STATE_ACTIVE = 2,		// 激活(按下)
-				WIDGET_STATE_DISABLE = 4,	// 禁用
+				WIDGET_STATE_DISABLED = 4,		// 禁用
+				WIDGET_STATE_DEACTIVATED = 8,	// 失去激活(本帧释放)
+				WIDGET_STATE_FOCUSED = 16,		// 持有焦点
+				WIDGET_STATE_EDITED = 32,		// 本帧被编辑
+				WIDGET_STATE_SUBMITTED = 64,	// 编辑后失活(提交)
+				WIDGET_STATE_DRAGGING = 128,	// 拖动中
 			};
 			// 函数: WidgetState::operator |
 			// 描述: 位或: 合并两枚部件状态位
@@ -70,9 +79,18 @@ namespace Controls
 				// 方法: StateColor
 				DWORD StateColor(WidgetState state) const
 				{
-					if (state & WIDGET_STATE_DISABLE) return crDisable;
+					if (state & WIDGET_STATE_DISABLED) return crDisable;
 					if (state & WIDGET_STATE_ACTIVE)  return crActive;
 					if (state & WIDGET_STATE_HOVERED) return crHovered;
+					return crBase;
+				}
+				// 方法: StateColor(即时状态重载)
+				// 描述: 按 ImmedState::State 取色(禁用 > 激活 > 悬停 > 常态)
+				DWORD StateColor(ImmedState::State state) const
+				{
+					if (state.IsDisabled()) return crDisable;
+					if (state.IsActive()) return crActive;
+					if (state.IsHovered()) return crHovered;
 					return crBase;
 				}
 			};
@@ -142,30 +160,37 @@ namespace Controls
 				return fRet;
 			}
 			// ================================
-			// 区域: 帧类单件(无右段按钮的整格件; 共用口径见 Widgets.md 的 InputText 节)
+			// 区域: 单件(无右段按钮的整格件; 共用口径见 Widgets.md 的 InputText 节)
 			// 返回约定: 位表与产出清单见 Widgets.md 的 InputText 节
-			// 说明: 底由 ImGui 原生帧绘制(内边距按声明高对齐); 边框画法按件分两类(见 Widgets.md 的 InputText 节)
+			// 说明: 底由 ImGui 原生框绘制(内边距按声明高对齐); 边框画法按件分两类(见 Widgets.md 的 InputText 节)
 			// ================================
 			// 函数: InputText
-			// 描述: 帧类单行文本件(底与边框由 ImGui 原生帧绘制, 帧高对齐声明高)
+			// 描述: 单行文本件(底与边框由 ImGui 原生框绘制, 控件高度对齐声明高)
 			int64_t InputText(int id, ImVec2 pos, ImVec2 size, CONST PaintWay& way, CHAR* lpText, size_t nTextCap,
 				LPCSTR lpHint);
 			// 函数: InputTextMulti
-			// 描述: 帧类多行文本件(项尺寸取声明矩形, 不做单行那样的垂直居中)
+			// 描述: 多行文本件(项尺寸取声明矩形, 不做单行那样的垂直居中)
 			int64_t InputTextMulti(int id, ImVec2 pos, ImVec2 size, CONST PaintWay& way, CHAR* lpText, size_t nTextCap,
 				LPCSTR lpHint);
 			// 函数: InputScalar
-			// 描述: 帧类数值件(底与边框由 ImGui 原生帧绘制, 文字经原生内边距居中)
+			// 描述: 数值件(底与边框由 ImGui 原生框绘制, 文字经原生内边距居中)
 			int64_t InputScalar(int id, ImVec2 pos, ImVec2 size, CONST PaintWay& way, VOID* pData, ImGuiDataType eType,
 				LPCSTR lpFormat, LPCSTR lpHint);
 			// 函数: Combo
-			// 描述: 帧类下拉件(展开列表的项表与 ComboAction 同源)
+			// 描述: 下拉件(展开列表的项表与 ComboAction 同源)
 			int64_t Combo(int id, ImVec2 pos, ImVec2 size, CONST PaintWay& way, LPCSTR* lpItems, INT nCount,
 				INT& nIndex);
 			// 函数: TimeSpan
 			// 描述: 时段显示件: 自绘圆角底 + 起点到终点的时码文本(无交互项)
 			int64_t TimeSpan(int id, ImVec2 pos, ImVec2 size, CONST PaintWay& way, int64_t nStartMs, int64_t nEndMs,
 				int64_t nLimitMs);
+			// 函数: TimeBar
+			// 描述: 可编辑时间条: 提示文本 + 圆角底 + 时/分/秒/毫秒四段数字输入, 变更经引用写回
+			int64_t TimeBar(int id, ImVec2 pos, ImVec2 size, CONST PaintWay& way, LPCSTR lpHint,
+				int64_t& rValueMs, int64_t nLimitMs);
+			// 函数: TextAction
+			// 描述: 文本动作部件: 命中区为覆盖控件矩形的无绘制项, 文本与按钮自绘
+			int64_t TextAction(int id, ImVec2 pos, ImVec2 size, CONST PaintWay& way, FLOAT fBtnW, LPCSTR lpText, LPCSTR lpBtn);
 			// 函数: InputAction
 			// 描述: 两段件: 左段单行输入 + 右段按钮(两段底与边框在项提交后补画)
 			int64_t InputAction(int id, ImVec2 pos, ImVec2 size, CONST PaintWay& way, FLOAT fBtnW, CHAR* lpText,
@@ -177,6 +202,10 @@ namespace Controls
 			// 函数: SingleSlider
 			// 描述: 单手柄滑动条件(命中区为覆盖整个控件矩形的无绘制项)
 			int64_t SingleSlider(int id, ImVec2 pos, ImVec2 size, CONST PaintWay& way, int64_t& value, int64_t lMin, int64_t lMax);
+			// 函数: RangeSlider
+			// 描述: 双手柄范围滑动条(左/右手柄分别返回专属段, 命中区覆盖整个控件矩形)
+			int64_t RangeSlider(int id, ImVec2 pos, ImVec2 size, CONST PaintWay& way,
+				int64_t& vMin, int64_t& vMax, int64_t lMin, int64_t lMax);
 			// 函数: ProgressStatic
 			// 描述: 进度状态显示件(底与文本取自配色方案)
 			BOOL ProgressStatic(int id, ImVec2 pos, ImVec2 size, CONST PaintWay& way, int64_t current, int64_t expect, FLOAT fPadding);
@@ -256,7 +285,7 @@ namespace Controls
 				VOID* pEventObj;			// 回调 obj(通常 = CtrlInfo*)
 				void* pEventData;			// 回调 data(通常 = 控件缓冲)
 				LPCSTR label;				// 列表子窗标签(NULL = 默认)
-				FLOAT fRounding;			// 列表子窗圆角(= 当前帧圆角; 设计内边距)
+				FLOAT fRounding;			// 列表子窗圆角(= 当前框圆角; 设计内边距)
 			};
 
 			// 函数: List
@@ -283,7 +312,7 @@ namespace Controls
 				DWORD dwCount;			// 项目数量(仅用于判定是否需要收窄让位)
 				DWORD crShell;			// 列表壳体底色(调用方按列表所属控件层次采样)
 				LPCSTR label;			// 列表子窗标签(稳定 ID 的一部分; NULL = 默认)
-				FLOAT fRounding;		// 列表子窗圆角(= 当前帧圆角; 设计内边距)
+				FLOAT fRounding;		// 列表子窗圆角(= 当前框圆角; 设计内边距)
 			};
 
 			// 函数: ListRow

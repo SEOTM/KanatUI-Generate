@@ -165,6 +165,37 @@ struct CtrlSliderData
 	int64_t lMax;			// 值域上限
 };
 
+// 常量: LIST_TIMESPAN_CAPACITY
+// 描述: 时间片列表的行容量(行块 TimeSpanItem)
+constexpr DWORD LIST_TIMESPAN_CAPACITY = 128;
+
+// 结构: TimeSpanItem
+// 描述: 时间片列表的一行(起止毫秒)
+struct TimeSpanItem
+{
+	int64_t startMs;		// 起点(毫秒)
+	int64_t endMs;			// 终点(毫秒)
+};
+
+// 结构: CtrlTimeBarData
+// 描述: 可编辑时间条的缓冲(提示文本 + 当前毫秒 + 上限毫秒; 时码四段由控件按值拆分)
+struct CtrlTimeBarData
+{
+	CHAR szHint[CTRL_LABEL_BUF];	// 提示文本(装配期由布局文本复制)
+	int64_t valueMs;				// 当前时间(毫秒)
+	int64_t limitMs;				// 上限(毫秒; 不大于 0 表示不限)
+};
+
+// 结构: CtrlSliderRangeData
+// 描述: 双手柄范围滑块的缓冲(当前区间与值域)
+struct CtrlSliderRangeData
+{
+	int64_t vMin;			// 左手柄当前值
+	int64_t vMax;			// 右手柄当前值
+	int64_t lMin;			// 值域下限
+	int64_t lMax;			// 值域上限
+};
+
 // ================================
 // 区域: 文本通道
 // 说明: 文本类控件的可编辑文本以"首址 + 容量"成对给出; 唯一入口是 CtrlTextRangeOf,

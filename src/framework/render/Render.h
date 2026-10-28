@@ -346,4 +346,16 @@ struct HostApi
 	// 成员: GetResizeStats
 	// 描述: 取窗口尺寸调整计数与最近一次调整后的客户区尺寸
 	VOID (*GetResizeStats)(DWORD* pdwCount, DWORD* pdwLastW, DWORD* pdwLastH);
+
+	// 成员: SetAppIcon
+	// 描述: 登记应用窗口图标(HICON; 建窗前调用)
+	VOID (*SetAppIcon)(VOID* hIcon);
+
+	// 成员: GetNativeDevice
+	// 描述: 取首个标准窗口的原生图形设备(未就绪时返回 NULL; 类型擦除)
+	VOID* (*GetNativeDevice)();
+
+	// 成员: GetNativeDeviceContext
+	// 描述: 取首个标准窗口的原生图形设备上下文(未就绪时返回 NULL; 类型擦除)
+	VOID* (*GetNativeDeviceContext)();
 };

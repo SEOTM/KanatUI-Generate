@@ -3,7 +3,7 @@
 ## 概述
 
 渲染能力接口:一个文件四部分 —— 渲染设施能力表(`RenderApi`, 16 项)+ 控件绘制接口表(`CtrlApi`, 3 项)+
-宿主接口表(`HostApi`, 13 项)+ 样式与状态定义(`StyleDesc` / `WndShowState` / `pfnFrame` / `pfnSegment`),
+宿主接口表(`HostApi`, 16 项)+ 样式与状态定义(`StyleDesc` / `WndShowState` / `pfnFrame` / `pfnSegment`),
 外加窗口状态位常量。
 
 本模块只定义**接口形式**——能力类型(`using` 定义的函数指针类型)、状态位常量、能力表结构体,
@@ -1051,6 +1051,9 @@ struct HostApi
 	BOOL    (*GetWndRect)(DWORD index, RECT* prcWnd, RECT* prcClient);
 	VOID    (*GetRenderStats)(DWORD* pdwSegments, DWORD* pdwCmdLists, INT64* pllVtx, INT64* pllIdx);
 	VOID    (*GetResizeStats)(DWORD* pdwCount, DWORD* pdwLastW, DWORD* pdwLastH);
+	VOID    (*SetAppIcon)(VOID* hIcon);
+	VOID*   (*GetNativeDevice)();
+	VOID*   (*GetNativeDeviceContext)();
 };
 ```
 
@@ -1071,6 +1074,9 @@ struct HostApi
 | `GetWndRect(index, prcWnd, prcClient)` | 取窗口矩形与客户区矩形; 窗口未建时返回 `FALSE`。 |
 | `GetRenderStats(...)` | 取绘制量自证计数(段数 / 绘制命令数 / 顶点数 / 索引数)。 |
 | `GetResizeStats(...)` | 取窗口尺寸调整计数与最近一次调整后的客户区尺寸。 |
+| `SetAppIcon(hIcon)` | 登记应用窗口图标(`HICON`; 建窗前调用)。 |
+| `GetNativeDevice()` | 取首个标准窗口的原生图形设备(未就绪时返回 `NULL`; 类型擦除)。 |
+| `GetNativeDeviceContext()` | 取首个标准窗口的原生图形设备上下文(未就绪时返回 `NULL`; 类型擦除)。 |
 
 ### 注解
 
